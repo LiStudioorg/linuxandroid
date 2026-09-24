@@ -5,6 +5,10 @@
 build/
 app/build/
 local.properties
+*.jks
+*.keystore
+myapp_base64.txt
+*_base64.txt
 .cxx/
 .DS_Store
 
