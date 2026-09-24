@@ -3,11 +3,11 @@ name: Build Android APK
 on:
   push:
     tags:
-      - '*' # 打任何 tag 都会触发，自动发 Release
-  workflow_dispatch: # 支持在 GitHub 网页上手动点击触发，只编译不发 Release
+      - '*' # 打任何 tag 都会触发
+  workflow_dispatch: # 支持手动触发（只编译，不发 Release）
 
 permissions:
-  contents: write # 必须显式声明写权限，否则无法创建 Release
+  contents: write # 必须要有写权限，否则无法创建 Release
 
 jobs:
   build:
@@ -17,36 +17,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 补充步骤：jniLibs/*.so 不入库，构建前从 Termux 官方仓库提取 PRoot，
-      # 否则 APK 中缺少 libproot.so / libproot-loader.so，运行时无法启动 shell。
-      - name: Fetch PRoot binaries from Termux deb
-        run: |
-          set -e
-          BASE="https://packages.termux.dev/apt/termux-main"
-          JNILIBS="app/src/main/jniLibs/arm64-v8a"
-          mkdir -p "$JNILIBS"
-          if [ ! -f "$JNILIBS/libproot.so" ] || [ ! -f "$JNILIBS/libproot-loader.so" ]; then
-            wget -q "$BASE/pool/main/p/proot/proot_5.1.107.94_aarch64.deb" -O /tmp/proot.deb
-            rm -rf /tmp/proot-ex && mkdir -p /tmp/proot-ex
-            dpkg-deb -x /tmp/proot.deb /tmp/proot-ex
-            cp /tmp/proot-ex/data/data/com.termux/files/usr/bin/proot \
-               "$JNILIBS/libproot.so"
-            cp /tmp/proot-ex/data/data/com.termux/files/usr/libexec/proot/loader \
-               "$JNILIBS/libproot-loader.so"
-            chmod 755 "$JNILIBS/libproot.so" "$JNILIBS/libproot-loader.so"
-          fi
-          ls -la "$JNILIBS"
-
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      # 替换掉了容易报错的 Setup Android SDK，直接接受预装SDK的许可证
+      - name: Accept Android SDK Licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      # 1. 从 Secrets 解密出 keystore，放在临时目录
+      # 1. 从 Secrets 解密出 keystore
       - name: Decode Keystore
         run: |
           mkdir -p ${{ runner.temp }}/keys
@@ -55,7 +36,7 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # 2. 编译时传入环境变量，告诉 Gradle 去哪里找 jks 和密码
+      # 2. 编译时传入环境变量
       - name: Build with Gradle (Release)
         run: ./gradlew assembleRelease
         env:
@@ -64,7 +45,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      # 3. 上传 APK 作为临时产物（手动触发时可以下载）
+      # 3. 上传 APK 作为临时产物
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
