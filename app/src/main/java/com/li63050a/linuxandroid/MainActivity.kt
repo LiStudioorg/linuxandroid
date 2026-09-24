@@ -258,11 +258,11 @@ class MainActivity : AppCompatActivity() {
             Screen.SETTINGS -> R.id.nav_settings
         }
         navView.setCheckedItem(menuId)
-        toolbar.title = getString(
+        val familyName = if (target == Screen.VERSIONS) currentFamily?.name else null
+        toolbar.title = familyName ?: getString(
             when (target) {
                 Screen.TERMINAL -> R.string.nav_terminal
-                Screen.DISTROS -> R.string.nav_distros
-                Screen.VERSIONS -> currentFamily?.name ?: R.string.nav_distros
+                Screen.DISTROS, Screen.VERSIONS -> R.string.nav_distros
                 Screen.SETTINGS -> R.string.nav_settings
             }
         )
