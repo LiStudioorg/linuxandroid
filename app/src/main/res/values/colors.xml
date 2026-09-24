@@ -1,8 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="bg_dark">#FF101418</color>
-    <color name="terminal_bg">#FF0A0E12</color>
-    <color name="terminal_text">#FFB7E1C2</color>
-    <color name="text_primary">#FFF2F5F7</color>
-    <color name="text_secondary">#FF8A959E</color>
+    <!-- 页面浅色主题 -->
+    <color name="bg_page">#FFF5F5F5</color>
+    <color name="surface">#FFFFFFFF</color>
+    <color name="bg_dark">#FFF5F5F5</color>
+
+    <!-- 文字 -->
+    <color name="text_primary">#FF212121</color>
+    <color name="text_secondary">#FF8A8A8A</color>
+
+    <!-- 强调色：柔和粉 + 浅蓝 -->
+    <color name="accent_pink">#FFFFB6C1</color>
+    <color name="accent_pink_pressed">#FFF4A7B9</color>
+    <color name="accent_blue">#FFADD8E6</color>
+    <color name="color_primary">#FF6C9FD6</color>
+    <color name="color_primary_dark">#FF4A82B5</color>
+
+    <!-- 终端 -->
+    <color name="terminal_bg">#FF1E1E1E</color>
+    <color name="terminal_text">#FFA8FF8A</color>
+    <color name="terminal_dim">#FF7A7A7A</color>
+
+    <!-- 控件 -->
+    <color name="search_bg">#FFEEEEEE</color>
+    <color name="divider">#FFE0E0E0</color>
+
+    <!-- 发行版图标底色 -->
+    <color name="icon_alpine">#FFADD8E6</color>
+    <color name="icon_debian">#FFFFB6C1</color>
+    <color name="icon_ubuntu">#FFF8BBD0</color>
 </resources>

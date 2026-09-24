@@ -76,7 +76,10 @@ app/
       libproot.so                 # ← usr/bin/proot
       libproot-loader.so          # ← usr/libexec/proot/loader
       README.txt                  # 提取步骤说明
-    res/layout/activity_main.xml
+    res/layout/{activity_main,nav_header,view_terminal,view_distros,view_settings,item_distro}.xml
+    res/menu/nav_menu.xml
+    res/drawable/{ic_launcher,ic_menu,ic_search,ic_terminal,ic_distro,ic_settings,
+                  bg_search,bg_terminal,bg_circle}.xml
     res/values/{strings,themes,colors}.xml
     java/com/li63050a/linuxandroid/
       DistroInfo.kt               # 数据类
@@ -87,7 +90,8 @@ app/
       ProotSession.kt             # 持久 shell 进程生命周期 + LD_LIBRARY_PATH
       NativeDeps.kt               # 释放 assets 运行库到 filesDir/native
       Sha256Utils.kt              # 流式 SHA256
-      MainActivity.kt             # UI 编排
+      DistroAdapter.kt            # 发行版卡片 RecyclerView 适配器
+      MainActivity.kt             # Drawer 三页编排
 ```
 
 ## 4. 关键流程
@@ -151,11 +155,15 @@ guest 侧环境：`TERM=xterm-256color`、`HOME=/root`、`LANG=C.UTF-8`、`TMPDI
 
 ### 4.5 UI（MainActivity）
 
-- 三个 Button 与清单按索引绑定（`btnDistro0/1/2`）：`下载 <name>` / `下载中 n% <name>` / `启动 <name>`
-- 同时仅一个安装任务；安装期间禁用全部按钮
-- 终端区：ScrollView + 等宽 TextView（`textIsSelectable`），超 200KB 截头防 OOM
+- 结构：`DrawerLayout + NavigationView` 三页导航，默认「终端」；顶栏 `MaterialToolbar` 汉堡按钮开抽屉，副标题显示全局状态（下载/解压/启动）
+  1. **终端页** `view_terminal.xml`：顶部圆角搜索框（过滤输出行）+ 深色终端（`#1E1E1E`、等宽浅绿字）+ 底部命令输入与圆角发送按钮（`App.Button`）
+  2. **发行版管理** `view_distros.xml` + `DistroAdapter`：`MaterialCardView` 列表（12dp 圆角、白底、elevation），卡片=圆形字母图标+名称/大小描述+操作按钮；下载中显示进度条与百分比
+  3. **设置页** `view_settings.xml`：版本/包名/ABI/SDK/rootfs 路径、**GitHub 链接**（`https://github.com/LiStudioorg/linuxandroid/`，ACTION_VIEW 打开）、清空终端
+- 图标：全部 vector drawable；应用图标 `ic_launcher.xml`（`>_` 深色圆角方块）
+- 状态色：页面 `#F5F5F5`、强调粉 `#FFB6C1`（按钮）/ 浅蓝 `#ADD8E6`（图标）；状态栏浅色 `windowLightStatusBar`
+- 同时仅一个安装任务；卡片状态由 `DistroAdapter.setState(id, Idle/Downloading/Installed)` 驱动
+- 终端：`outputRaw` 缓冲 + 搜索过滤渲染，超 200KB 截头；自动滚底
 - 作用域 `MainScope()`；`onDestroy` 取消作用域、cancel 下载 Call、destroy shell
-- 根布局 `fitsSystemWindows="true"`（targetSdk 35+ 边到边）
 
 ## 5. 数据与文件布局
 
@@ -233,7 +241,7 @@ test -f app/src/main/jniLibs/arm64-v8a/libproot.so && echo local-so-ok
 
 ## 8. 硬性约束（禁止违反）
 
-1. 不引入 AppCompat/Material/RecyclerView；布局仅 framework 控件。
+1. UI 使用 **AppCompat + Material Components**（DrawerLayout / NavigationView / RecyclerView / MaterialCardView / MaterialToolbar，浅色主题）；布局 XML + Kotlin，不引入 Compose。
 2. 不申请存储权限；不读写应用私有目录以外路径。
 3. Manifest 必须 `android:extractNativeLibs="true"`；Gradle 必须 `packaging { jniLibs { useLegacyPackaging = true } }`。
 4. 仅 `arm64-v8a`。

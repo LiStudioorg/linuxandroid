@@ -42,6 +42,12 @@ android {
                 ?: localProps.getProperty("KEY_ALIAS") ?: ""
             keyPassword = System.getenv("KEY_PASSWORD")
                 ?: localProps.getProperty("KEY_PASSWORD") ?: ""
+
+            // 签名方案：V2/V3（minSdk 24 起设备均支持），关闭 V1 与 V4
+            enableV1Signing = false
+            enableV2Signing = true
+            enableV3Signing = true
+            enableV4Signing = false
         }
     }
 
@@ -73,6 +79,13 @@ android {
 }
 
 dependencies {
+    // UI：AppCompat + Material + DrawerLayout + RecyclerView（现代化浅色界面）
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.drawerlayout:drawerlayout:1.2.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("com.google.android.material:material:1.12.0")
+    // 核心功能
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.apache.commons:commons-compress:1.26.0")
     implementation("org.tukaani:xz:1.9")

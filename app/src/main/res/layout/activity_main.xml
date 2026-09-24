@@ -1,135 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_dark"
     android:fitsSystemWindows="true"
-    android:orientation="vertical"
-    android:padding="8dp">
+    android:background="@color/bg_page">
 
-    <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="6dp"
-        android:text="@string/app_title"
-        android:textColor="@color/text_primary"
-        android:textSize="18sp"
-        android:textStyle="bold" />
-
-    <!-- 三个发行版按钮，与清单按索引绑定 -->
+    <!-- 主内容 -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <Button
-            android:id="@+id/btnDistro0"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="4dp"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="2"
-            android:text="@string/btn_distro_placeholder"
-            android:textSize="13sp" />
-
-        <Button
-            android:id="@+id/btnDistro1"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="4dp"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="2"
-            android:text="@string/btn_distro_placeholder"
-            android:textSize="13sp" />
-
-        <Button
-            android:id="@+id/btnDistro2"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="2"
-            android:text="@string/btn_distro_placeholder"
-            android:textSize="13sp" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <ProgressBar
-            android:id="@+id/progressBar"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:max="100"
-            android:progress="0"
-            android:visibility="gone" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="4dp"
-        android:text="@string/status_idle"
-        android:textColor="@color/text_secondary"
-        android:textSize="12sp" />
-
-    <!-- 终端输出区 -->
-    <ScrollView
-        android:id="@+id/scrollOutput"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="@color/terminal_bg"
-        android:fillViewport="true"
-        android:padding="6dp">
-
-        <TextView
-            android:id="@+id/tvOutput"
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="monospace"
-            android:text="@string/terminal_placeholder"
-            android:textColor="@color/terminal_text"
-            android:textIsSelectable="true"
-            android:textSize="12sp" />
-    </ScrollView>
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/surface"
+            android:elevation="2dp"
+            app:navigationIcon="@drawable/ic_menu"
+            app:subtitleTextColor="@color/text_secondary"
+            app:title="@string/app_name"
+            app:titleTextColor="@color/text_primary" />
 
-    <!-- 命令输入行 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingTop="6dp">
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
 
-        <EditText
-            android:id="@+id/editCommand"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:fontFamily="monospace"
-            android:hint="@string/hint_command"
-            android:imeOptions="actionSend"
-            android:inputType="text"
-            android:maxLines="1"
-            android:textColor="@color/text_primary"
-            android:textColorHint="@color/text_secondary"
-            android:textSize="14sp" />
+            <!-- 1. 终端 -->
+            <include
+                android:id="@+id/view_terminal"
+                layout="@layout/view_terminal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
 
-        <Button
-            android:id="@+id/btnSend"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:text="@string/btn_send" />
+            <!-- 2. 发行版管理 -->
+            <include
+                android:id="@+id/view_distros"
+                layout="@layout/view_distros"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+
+            <!-- 3. 设置 -->
+            <include
+                android:id="@+id/view_settings"
+                layout="@layout/view_settings"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+        </FrameLayout>
     </LinearLayout>
-</LinearLayout>
+
+    <!-- 左侧抽屉 -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@color/surface"
+        app:headerLayout="@layout/nav_header"
+        app:itemIconTint="@color/text_primary"
+        app:itemTextColor="@color/text_primary"
+        app:menu="@menu/nav_menu" />
+</androidx.drawerlayout.widget.DrawerLayout>
