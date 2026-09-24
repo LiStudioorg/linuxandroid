@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Linux终端 (PRoot·无需root)</string>
+    <string name="app_name">linuxandroid</string>
 
     <!-- 侧边栏导航 -->
     <string name="nav_terminal">终端</string>
-    <string name="nav_distros">发行版管理</string>
+    <string name="nav_distros">发行版</string>
+    <string name="nav_logs">日志</string>
     <string name="nav_settings">设置</string>
     <string name="app_subtitle">免 root 的 Linux 环境</string>
 
@@ -13,13 +14,44 @@
     <string name="hint_command">输入命令，如 ls</string>
     <string name="btn_send">发送</string>
     <string name="terminal_empty">终端输出将显示在这里。\n启动 shell 后可输入命令，例如：ls / cat /etc/os-release\n无提示符时可输入：sh -i</string>
-    <string name="status_idle">就绪：在「发行版管理」下载发行版，或启动已安装环境</string>
+    <string name="status_idle">就绪：在「发行版」下载版本，或启动已安装环境</string>
+    <string name="hotkey_esc">ESC</string>
+    <string name="hotkey_ctrl">CTRL</string>
+    <string name="hotkey_tab">TAB</string>
+    <string name="hotkey_up">↑</string>
+    <string name="hotkey_down">↓</string>
+    <string name="hotkey_left">←</string>
+    <string name="hotkey_right">→</string>
 
-    <!-- 发行版管理 -->
-    <string name="distros_header">选择要安装的 Linux 发行版</string>
+    <!-- 终端退出对话框 -->
+    <string name="dlg_exit_title">终端</string>
+    <string name="dlg_exit_message">选择「保持运行」可在下次直接回到当前会话；选择「关闭终端」将结束 shell 进程。</string>
+    <string name="btn_keep_alive">保持运行</string>
+    <string name="btn_close_terminal">关闭终端</string>
+    <string name="btn_cancel">取消</string>
+
+    <!-- 发行版 / 版本 -->
+    <string name="distros_header">选择发行版，再选择要下载的版本</string>
+    <string name="versions_header_fmt">%1$s 版本列表</string>
+    <string name="family_versions_fmt">%1$d 个版本可下载</string>
     <string name="btn_download">下载</string>
     <string name="btn_start">启动</string>
-    <string name="btn_downloading">下载中</string>
+    <string name="btn_pick_version">选择版本</string>
+    <string name="btn_uninstall">卸载</string>
+    <string name="btn_uninstall_confirm">确认卸载</string>
+    <string name="dlg_uninstall_title">卸载版本？</string>
+    <string name="dlg_uninstall_message">将删除已下载的 rootfs，可重新下载恢复。</string>
+    <string name="toast_not_installed">该版本尚未安装，请先下载</string>
+
+    <!-- 日志 -->
+    <string name="logs_empty">（暂无日志）</string>
+    <string name="btn_share_log">分享日志</string>
+    <string name="btn_copy_log">复制</string>
+    <string name="btn_refresh">刷新</string>
+    <string name="btn_clear_log">清空</string>
+    <string name="share_log_subject">linuxandroid 运行日志</string>
+    <string name="toast_copied">已复制到剪贴板</string>
+    <string name="toast_log_cleared">日志已清空</string>
 
     <!-- 设置页 -->
     <string name="settings_header">应用信息</string>

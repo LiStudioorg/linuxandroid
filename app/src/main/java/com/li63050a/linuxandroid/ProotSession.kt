@@ -16,16 +16,10 @@ import java.util.concurrent.TimeUnit
  * libproot.so -r <rootfs> -0 -w /root \
  *   -b /dev -b /proc -b /sys -b /dev/urandom:/dev/random <shell>
  *
- * 必设环境变量：
- * - PROOT_TMP_DIR：宿主侧私有临时目录（绝对路径）
- * - PROOT_LOADER：libproot-loader.so 绝对路径
- * - LD_LIBRARY_PATH：NativeDeps 释放的 libtalloc/libandroid-shmem 搜索路径
+ * 必设环境变量：PROOT_TMP_DIR / PROOT_LOADER / LD_LIBRARY_PATH（均绝对路径）。
+ * 启动命令与输出写入 AppLogger。
  *
- * stdout/stderr 合并读取，后台线程解码 UTF-8 后经主线程回调；
- * 非 PTY 下 shell 无提示符、不回显，由 UI 侧做本地回显。
- *
- * minSdk 24 兼容：Process.isAlive / waitFor(timeout) / destroyForcibly
- * 均为 API 26+，以下用 Build.VERSION 分支，低版本走 exitValue/无限 waitFor。
+ * minSdk 24：isAlive/waitFor(timeout)/destroyForcibly 走 SDK_INT 分支。
  */
 class ProotSession(
     private val prootBin: File,
@@ -37,7 +31,6 @@ class ProotSession(
     private val listener: Listener
 ) {
 
-    /** 输出与退出事件回调（均派发在主线程） */
     interface Listener {
         fun onOutput(text: String)
         fun onExit(code: Int)
@@ -57,7 +50,6 @@ class ProotSession(
             return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 p.isAlive
             } else {
-                // API 24/25：exitValue() 抛异常表示仍在运行
                 try {
                     p.exitValue()
                     false
@@ -67,7 +59,6 @@ class ProotSession(
             }
         }
 
-    /** 启动 shell；缺二进制/缺 rootfs 抛 IOException，由 UI 展示 */
     @Throws(IOException::class)
     fun start() {
         if (isRunning) return
@@ -75,7 +66,7 @@ class ProotSession(
         if (!loader.isFile) throw IOException("缺少 PRoot loader: ${loader.name}")
         if (!rootfs.isDirectory) throw IOException("rootfs 不存在: ${rootfs.absolutePath}")
 
-        prootBin.setExecutable(true, false) // 兜底确保可执行
+        prootBin.setExecutable(true, false)
         prootTmpDir.mkdirs()
 
         val command = listOf(
@@ -94,10 +85,8 @@ class ProotSession(
         pb.redirectErrorStream(true)
         val env = pb.environment()
 
-        // —— proot 运行期依赖（必须是宿主绝对路径） ——
         env["PROOT_TMP_DIR"] = prootTmpDir.absolutePath
         env["PROOT_LOADER"] = loader.absolutePath
-        // libtalloc/libandroid-shmem 搜索路径（覆盖 proot 内置的 Termux RUNPATH 失效场景）
         extraLibDir?.let { dir ->
             val existing = env["LD_LIBRARY_PATH"]
             env["LD_LIBRARY_PATH"] =
@@ -105,12 +94,17 @@ class ProotSession(
                 else "${dir.absolutePath}:$existing"
         }
 
-        // —— 透传给 guest shell 的环境 ——
         env["TERM"] = "xterm-256color"
         env["HOME"] = "/root"
         env["LANG"] = "C.UTF-8"
         env["TMPDIR"] = "/tmp"
         env["PATH"] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+        AppLogger.i("Proot", "start cmd=${command.joinToString(" ")}")
+        AppLogger.i(
+            "Proot",
+            "env PROOT_TMP_DIR=${env["PROOT_TMP_DIR"]} PROOT_LOADER=${env["PROOT_LOADER"]} LD_LIBRARY_PATH=${env["LD_LIBRARY_PATH"]}"
+        )
 
         val p = pb.start()
         process = p
@@ -122,7 +116,6 @@ class ProotSession(
         }
     }
 
-    /** 后台线程：持续读取合并后的 stdout/stderr，直到 EOF 再等待退出 */
     private fun readLoop(p: Process) {
         try {
             InputStreamReader(p.inputStream, Charsets.UTF_8).use { reader ->
@@ -131,11 +124,15 @@ class ProotSession(
                     val n = reader.read(buf)
                     if (n < 0) break
                     val chunk = String(buf, 0, n)
+                    // 输出/错误流合并（redirectErrorStream），完整记录到日志
+                    if (chunk.isNotBlank()) {
+                        AppLogger.d("ProotOut", chunk.trimEnd())
+                    }
                     mainHandler.post { listener.onOutput(chunk) }
                 }
             }
-        } catch (_: IOException) {
-            // 进程被销毁时的正常路径
+        } catch (e: IOException) {
+            AppLogger.w("Proot", "read loop ended: ${e.message}")
         }
         val code = try {
             p.waitFor()
@@ -147,6 +144,7 @@ class ProotSession(
             runCatching { writer?.close() }
             writer = null
         }
+        AppLogger.i("Proot", "exit code=$code")
         mainHandler.post { listener.onExit(code) }
     }
 
@@ -154,6 +152,7 @@ class ProotSession(
     @Throws(IOException::class)
     fun sendCommand(command: String) {
         val w = writer ?: throw IOException("Shell 未运行")
+        AppLogger.d("Proot", "send: $command")
         synchronized(this) {
             w.write(command)
             w.write("\n")
@@ -161,9 +160,19 @@ class ProotSession(
         }
     }
 
-    /** 结束会话：先关 stdin 让 shell 自行退出，2 秒后强杀（低版本仅 destroy） */
+    /** 写入原始控制序列（不追加换行），供 ESC/方向键等快捷键使用 */
+    @Throws(IOException::class)
+    fun sendRaw(data: String) {
+        val w = writer ?: throw IOException("Shell 未运行")
+        synchronized(this) {
+            w.write(data)
+            w.flush()
+        }
+    }
+
     fun destroy() {
         val p = process ?: return
+        AppLogger.i("Proot", "destroy requested")
         process = null
         synchronized(this) {
             runCatching { writer?.close() }
@@ -177,7 +186,6 @@ class ProotSession(
                         p.destroyForcibly()
                     }
                 } else {
-                    // API 24/25 无带超时的 waitFor / destroyForcibly
                     p.waitFor()
                 }
             } catch (_: Exception) {

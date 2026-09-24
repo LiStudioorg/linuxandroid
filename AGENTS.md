@@ -9,8 +9,9 @@ LinuxAndroid（界面品牌名 **ProotTerm**）是一个免 root 的 Android 应
 - applicationId / namespace / Kotlin 包名：**com.li63050a.linuxandroid**（三者一致，Manifest 的 `.MainActivity` 依赖 namespace 解析，源码包名不得再改回其他值）
 - versionCode 1 / versionName `0.0.0.1`
 - 目标架构：仅 `arm64-v8a`
-- 语言：Kotlin 100%，界面：XML 布局 + `android.app.Activity`（不引入 AppCompat / Material 组件）
-- rootfs 解压后的目录：`filesDir/rootfs/<distroId>`
+- 语言：Kotlin 100%，界面：XML 布局 + **AppCompat + Material Components**（DrawerLayout / NavigationView / MaterialToolbar / MaterialCardView / RecyclerView，不引入 Compose）
+- rootfs 解压后的目录：`filesDir/rootfs/<versionId>`（如 `alpine-3.20`）
+- 日志：`AppLogger` → 内存环形缓冲 + `filesDir/logs/app.log`（1MB 滚动 `.old`）+ Logcat；`LogActivity` 查看/复制/一键分享（FileProvider `content://`）
 - 不申请任何存储权限，全部使用应用私有目录
 - Git 远程：`git@github.com:LiStudioorg/linuxandroid.git`（SSH，禁止改回 HTTPS）
 
@@ -60,38 +61,44 @@ build.gradle.kts                  # AGP 8.11.1 + Kotlin 2.0.21
 gradle.properties
 gradlew / gradlew.bat             # Gradle 8.13 wrapper（入库，CI 直接 ./gradlew）
 gradle/wrapper/{gradle-wrapper.jar, gradle-wrapper.properties}
-.gitignore                        # 排除 jniLibs/**/*.so（CI 自动补拉）
-.github/workflows/android.yml     # tag → Release；workflow_dispatch → 仅产物
+.gitignore                        # 不排除 jniLibs *.so（已入库）
+.github/workflows/android.yml     # tag → Release；workflow_dispatch → 仅产物（无 Fetch 步骤）
 app/
   build.gradle.kts                # 包名/SDK/签名/packaging.jniLibs
   proguard-rules.pro
   src/main/
-    AndroidManifest.xml           # extractNativeLibs="true"，仅 INTERNET 权限
+    AndroidManifest.xml           # extractNativeLibs="true"，.App + MainActivity + LogActivity + FileProvider
     assets/
-      rootfs_manifest.json        # 三发行版清单
+      rootfs_manifest.json        # version 2：三发行版家族 → 多历史版本
       native/arm64-v8a/           # 运行期依赖（入库）
         libtalloc.so.2            # proot NEEDED；名字不以 .so 结尾不进 jniLibs
         libandroid-shmem.so       # proot NEEDED
-    jniLibs/arm64-v8a/            # *.so 不入库，CI/本地手动提取
+    jniLibs/arm64-v8a/            # *.so 已入库（.gitignore 不排除）
       libproot.so                 # ← usr/bin/proot
       libproot-loader.so          # ← usr/libexec/proot/loader
-      README.txt                  # 提取步骤说明
-    res/layout/{activity_main,nav_header,view_terminal,view_distros,view_settings,item_distro}.xml
-    res/menu/nav_menu.xml
+      README.txt                  # deb 提取步骤（兜底说明）
+    res/xml/file_paths.xml        # FileProvider paths（logs）
+    res/layout/{activity_main,activity_log,nav_header,view_terminal,view_distros,
+                view_versions,view_settings,item_distro,item_version}.xml
+    res/menu/nav_menu.xml         # 终端/发行版/日志/设置（默认发行版）
     res/drawable/{ic_launcher,ic_menu,ic_search,ic_terminal,ic_distro,ic_settings,
-                  bg_search,bg_terminal,bg_circle}.xml
+                  ic_logs,ic_back,bg_search,bg_terminal,bg_circle}.xml
     res/values/{strings,themes,colors}.xml
     java/com/li63050a/linuxandroid/
-      DistroInfo.kt               # 数据类
-      ManifestLoader.kt           # assets JSON 解析
+      App.kt                      # 全局 Application：AppLogger 初始化 + 未捕获异常落盘
+      AppLogger.kt                # 日志：内存缓冲 + logs/app.log + Logcat
+      LogActivity.kt              # 日志页：刷新/清空/复制/分享（FileProvider content://）
+      DistroInfo.kt               # DistroFamily / DistroVersion / DistroInfo 数据类
+      ManifestLoader.kt           # assets JSON 解析（version 2 嵌套结构）
       RootfsManager.kt            # 目录规划、安装标记、原子切换
       RootfsDownloader.kt         # OkHttp 下载（断点续传 + 多镜像）
       RootfsExtractor.kt          # tar 解压（符号链接/权限/防穿越，API24 安全）
       ProotSession.kt             # 持久 shell 进程生命周期 + LD_LIBRARY_PATH
       NativeDeps.kt               # 释放 assets 运行库到 filesDir/native
       Sha256Utils.kt              # 流式 SHA256
-      DistroAdapter.kt            # 发行版卡片 RecyclerView 适配器
-      MainActivity.kt             # Drawer 三页编排
+      DistroAdapter.kt            # 家族卡片 RecyclerView 适配器
+      VersionAdapter.kt           # 版本列表 RecyclerView 适配器
+      MainActivity.kt             # Drawer 四屏编排（终端/发行版/版本/设置）
 ```
 
 ## 4. 关键流程
@@ -153,17 +160,21 @@ guest 侧环境：`TERM=xterm-256color`、`HOME=/root`、`LANG=C.UTF-8`、`TMPDI
 - 非 PTY 无提示符/无回显：UI 本地回显 `$ <cmd>`；README 提示 `sh -i`
 - API 24：`isRunning` 用 `exitValue()`；destroy 后台线程低版本仅 `waitFor()`
 
-### 4.5 UI（MainActivity）
+### 4.5 UI（MainActivity，四屏 Screen 枚举）
 
-- 结构：`DrawerLayout + NavigationView` 三页导航，默认「终端」；顶栏 `MaterialToolbar` 汉堡按钮开抽屉，副标题显示全局状态（下载/解压/启动）
-  1. **终端页** `view_terminal.xml`：顶部圆角搜索框（过滤输出行）+ 深色终端（`#1E1E1E`、等宽浅绿字）+ 底部命令输入与圆角发送按钮（`App.Button`）
-  2. **发行版管理** `view_distros.xml` + `DistroAdapter`：`MaterialCardView` 列表（12dp 圆角、白底、elevation），卡片=圆形字母图标+名称/大小描述+操作按钮；下载中显示进度条与百分比
-  3. **设置页** `view_settings.xml`：版本/包名/ABI/SDK/rootfs 路径、**GitHub 链接**（`https://github.com/LiStudioorg/linuxandroid/`，ACTION_VIEW 打开）、清空终端
+- 结构：`DrawerLayout + NavigationView`，**默认「发行版管理」**；顶栏 `MaterialToolbar` 汉堡开抽屉，副标题显示全局状态
+  1. **发行版管理**（Screen `DISTROS`）`view_distros.xml` + `DistroAdapter`：三家族卡片（Alpine/Debian/Ubuntu），点击进入版本页
+  2. **版本选择**（Screen `VERSIONS`）`view_versions.xml` + `VersionAdapter`：该家族多历史版本（大小/描述/下载-启动-卸载）；返回键回发行版页
+  3. **终端页**（Screen `TERMINAL`）`view_terminal.xml`：搜索框过滤输出 + 纯黑等宽终端 + 快捷键行（ESC/CTRL/TAB/方向键，CTRL 组合经 `btn_key_<ch>` 查找）+ 命令输入/发送
+  4. **设置页**（Screen `SETTINGS`）`view_settings.xml`：版本/包名/ABI/SDK/rootfs 路径、GitHub 链接、清空终端
+  - **nav_logs** 不占 Screen，直接 `startActivity(LogActivity::class.java)`
+- 终端**返回键**：会话运行中弹「保持运行 / 关闭终端」对话框；否则回发行版页
 - 图标：全部 vector drawable；应用图标 `ic_launcher.xml`（`>_` 深色圆角方块）
-- 状态色：页面 `#F5F5F5`、强调粉 `#FFB6C1`（按钮）/ 浅蓝 `#ADD8E6`（图标）；状态栏浅色 `windowLightStatusBar`
-- 同时仅一个安装任务；卡片状态由 `DistroAdapter.setState(id, Idle/Downloading/Installed)` 驱动
+- 状态色：页面 `#F5F5F5`、强调粉 `#FFB6C1` / 浅蓝 `#ADD8E6`；状态栏 `windowLightStatusBar`
+- 同时仅一个安装任务；家族/版本卡片状态由 `DistroAdapter.setState` / `VersionAdapter.setState` 驱动；下载中切屏用 `lastDownloadPct` 恢复进度
+- 安装/启动全包在 `Dispatchers.IO` + 全局 try-catch + 下载前 `RootfsManager` 空间检查；失败只 Toast 不闪退
 - 终端：`outputRaw` 缓冲 + 搜索过滤渲染，超 200KB 截头；自动滚底
-- 作用域 `MainScope()`；`onDestroy` 取消作用域、cancel 下载 Call、destroy shell
+- 作用域 `MainScope()`；`onDestroy` 取消作用域/job、cancel 下载 Call、destroy shell
 
 ## 5. 数据与文件布局
 
@@ -178,30 +189,29 @@ filesDir/
 
 ## 6. 清单格式（assets/rootfs_manifest.json）
 
-顶层 `{"version": 1, "distros": [...]}`，字段均必填，`mirrors`/`sha256` 可为空：
+顶层 `{"version": 2, "distros": [ { id/name/description/icon, versions: [...] } ]}`，版本字段均必填，`mirrors`/`sha256` 可为空：
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| id | string | 唯一标识，目录名，如 `alpine-3.20` |
-| name | string | 按钮显示名 |
-| description | string | 描述，状态栏展示 |
+| id | string | 家族 id（`alpine`/`debian`/`ubuntu`）；版本 id 如 `alpine-3.20` 作目录名 |
+| name | string | 家族名 / 版本名 |
+| description | string | 描述 |
 | size | long | 预计字节（进度 UI 兜底，不参与完整性校验） |
 | url | string | 主下载地址 |
-| mirrors | string[] | 备用镜像 |
+| mirrors | string[] | 备用镜像（如 tuna） |
 | sha256 | string | 小写十六进制；空串跳过校验 |
 | format | string | `tar.gz` / `tar.xz` |
 | defaultShell | string | guest shell 绝对路径 |
 
-已知校验值：Alpine `041fa34a…f3de`、Ubuntu 24.04.3 arm64 `7b2dced6…b048`；Debian 留空。
+已知：Alpine 3.20/3.19/3.18（dl-cdn+sha256）、Debian 13/12/11（termux proot-distro tar.xz，sha256 空）、Ubuntu 24.04.5/22.04.5/20.04.5（cdimage arm64 tar.gz+sha256）。
 
 ## 7. 构建与验证
 
 ### 本地
 
 ```bash
-# 1) 放入 PRoot（二选一）
-#    a) 手动：见 app/src/main/jniLibs/arm64-v8a/README.txt（deb 提取步骤）
-#    b) 直接跑 workflow 里的 Fetch PRoot binaries 命令段
+# 1) PRoot 二进制已随仓库入库（app/src/main/jniLibs/arm64-v8a/*.so）
+#    若需重新提取：见同目录 README.txt（Termux deb → 重命名放入）
 
 # 2) 本地签名（可选，仅 assembleRelease 需要）
 cat >> local.properties <<'EOF'
@@ -220,14 +230,8 @@ EOF
 
 1. `push` 任意 **tag** → 构建 + 自动创建 GitHub Release（附 APK）
 2. **workflow_dispatch** → 仅构建 + Artifact 上传，不发 Release
-3. 步骤顺序：Checkout → **Fetch PRoot binaries from Termux deb** → JDK17 → Android SDK → Decode Keystore → chmod gradlew → `./gradlew assembleRelease` → Upload → Release
-4. PRoot 拉取逻辑（保证 jniLibs 两个 .so 就位，否则真机启动即崩）：
-   - 下载 `https://packages.termux.dev/apt/termux-main/pool/main/p/proot/proot_5.1.107.94_aarch64.deb`
-   - `dpkg-deb -x` 解开，拷贝
-     `usr/bin/proot` → `libproot.so`、
-     `usr/libexec/proot/loader` → `libproot-loader.so`
-   - 目标目录 `app/src/main/jniLibs/arm64-v8a/`；文件已存在则跳过
-5. 所需 Secrets：`KEYSTORE_BASE64`（jks 的 base64）、`KEYSTORE_PASSWORD`、`KEY_ALIAS`、`KEY_PASSWORD`
+3. 步骤顺序：Checkout → JDK17 → Accept SDK Licenses → Decode Keystore → chmod gradlew → `./gradlew assembleRelease` → Upload → Release（**无 Fetch PRoot 步骤**，`jniLibs` 两个 .so 已入库直接打包）
+4. 所需 Secrets：`KEYSTORE_BASE64`（jks 的 base64）、`KEYSTORE_PASSWORD`、`KEY_ALIAS`、`KEY_PASSWORD`
 
 ### 终检清单
 
@@ -249,6 +253,7 @@ test -f app/src/main/jniLibs/arm64-v8a/libproot.so && echo local-so-ok
 6. 禁止使用 `java.nio.file`；`Process.isAlive/waitFor(timeout)/destroyForcibly` 必须 SDK_INT 分支。
 7. 下载必须 `.part` + Range；解压必须先 tmp 再 rename；符号链接、权限位、路径穿越三者缺一不可。
 8. `PROOT_TMP_DIR`、`PROOT_LOADER`、`LD_LIBRARY_PATH` 必须设置为绝对路径。
-9. `jniLibs/**/*.so` 不入库（workflow 自动拉取）；`assets/native/**` 运行库必须入库。
-10. 新增发行版只改 `rootfs_manifest.json`（及必要时按钮数量），不动下载/解压核心逻辑。
+9. `jniLibs/**/*.so` **必须入库**（`.gitignore` 不得排除；`assets/native/**` 运行库也必须入库）。
+10. 新增发行版/历史版本只改 `rootfs_manifest.json` 嵌套结构，不动下载/解压核心逻辑；删除自定义发行版 FAB 功能已废弃，禁止加回。
 11. 远程仓库只用 SSH：`git@github.com:LiStudioorg/linuxandroid.git`。
+12. 日志分享必须 FileProvider `content://`，禁止 `file://`；闪退前堆栈必须先写 `AppLogger` 再结束进程。

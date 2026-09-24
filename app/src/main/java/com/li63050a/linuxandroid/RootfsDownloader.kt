@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit
  * 1. 断点续传 —— 写入 <id>.<format>.part，已有字节时携带 Range 头；
  * 2. 多镜像回退 —— 主源失败后依次尝试 mirrors，.part 保留；
  * 3. 进度回调 —— 至少 200ms 节流一次。
+ * 全程 Dispatchers.IO；关键节点写入 AppLogger。
  */
 class RootfsDownloader(
     private val client: OkHttpClient = OkHttpClient.Builder()
@@ -33,38 +34,45 @@ class RootfsDownloader(
 
     private val contentRangeRegex = Regex("""bytes\s+(\d+)-(\d+)/(\d+|\*)""")
 
-    /** 取消当前网络请求（配合协程取消，用于中断阻塞中的 execute） */
     fun cancel() {
-        activeCall?.cancel()
+        try {
+            activeCall?.cancel()
+            AppLogger.w("Downloader", "cancel requested")
+        } catch (e: Exception) {
+            AppLogger.e("Downloader", "cancel failed", e)
+        }
     }
 
-    /**
-     * 依次尝试 [DistroInfo.allUrls] 下载到 [partFile]。
-     * 全部地址失败才抛出最后一个异常；部分失败时保留 .part 供续传。
-     * 返回下载完成的 part 文件。
-     */
     suspend fun download(
         distro: DistroInfo,
         partFile: File,
         onProgress: (done: Long, total: Long) -> Unit
     ): File = withContext(Dispatchers.IO) {
         var lastError: Exception? = null
+        AppLogger.i(
+            "Downloader",
+            "start id=${distro.id} existing=${partFile.length()} urls=${distro.allUrls.size}"
+        )
         for (url in distro.allUrls) {
-            ensureActive() // 已取消则不再尝试下一镜像
+            ensureActive()
             try {
                 downloadFrom(url, distro, partFile, onProgress)
+                AppLogger.i("Downloader", "done id=${distro.id} bytes=${partFile.length()}")
                 return@withContext partFile
             } catch (e: CancellationException) {
+                AppLogger.w("Downloader", "cancelled id=${distro.id}")
                 throw e
             } catch (e: Exception) {
-                ensureActive() // 主动 cancel 导致的 IOException 在这里转为 CancellationException
+                ensureActive()
+                AppLogger.e("Downloader", "failed id=${distro.id} url=$url", e)
                 lastError = e
             }
         }
-        throw lastError ?: IOException("没有可用的下载地址")
+        val err = lastError ?: IOException("没有可用的下载地址")
+        AppLogger.e("Downloader", "all urls failed id=${distro.id}", err)
+        throw err
     }
 
-    /** 单个地址的完整下载流程。 */
     private fun downloadFrom(
         url: String,
         distro: DistroInfo,
@@ -72,10 +80,10 @@ class RootfsDownloader(
         onProgress: (Long, Long) -> Unit
     ) {
         val existing = if (partFile.exists()) partFile.length() else 0L
+        AppLogger.i("Downloader", "GET $url (resume=$existing)")
         val builder = Request.Builder()
             .url(url)
             .get()
-            // 关闭透明 gzip，保证 Range 字节偏移与文件内容一致
             .header("Accept-Encoding", "identity")
         if (existing > 0) {
             builder.header("Range", "bytes=$existing-")
@@ -85,7 +93,7 @@ class RootfsDownloader(
         activeCall = call
         try {
             call.execute().use { response ->
-                // Range 起点已越过文件末尾：视为已下载完整
+                AppLogger.i("Downloader", "HTTP ${response.code} $url")
                 if (response.code == 416) {
                     val len = partFile.length()
                     onProgress(len, len)
@@ -98,7 +106,6 @@ class RootfsDownloader(
 
                 var append = false
                 var base = 0L
-                // 服务器声明的真实总字节数（用于完整性判断，-1 表示未知）
                 var verifyTotal = -1L
 
                 when (response.code) {
@@ -119,20 +126,17 @@ class RootfsDownloader(
                                 "Content-Range 起点不匹配(期望 $existing 实际 $start): $url"
                             )
                         }
-                        val totalStr = match?.groupValues?.get(3)
-                        verifyTotal = totalStr
+                        verifyTotal = match?.groupValues?.get(3)
                             ?.takeIf { it != "*" }
                             ?.toLongOrNull() ?: -1L
                     }
                     else -> {
-                        // 200：服务器忽略 Range 或不支持断点，从头覆盖写入
                         append = false
                         base = 0L
                         verifyTotal = body.contentLength().takeIf { it > 0 } ?: -1L
                     }
                 }
 
-                // UI 展示用总长：真实总长未知时回退到清单里的预计大小
                 val uiTotal = if (verifyTotal > 0) verifyTotal
                 else if (distro.size > 0) distro.size
                 else -1L
@@ -161,7 +165,6 @@ class RootfsDownloader(
                 }
                 onProgress(done, uiTotal)
 
-                // 服务器声明了总长却提前断开：视为不完整，交给下一镜像续传
                 if (verifyTotal > 0 && done < verifyTotal) {
                     throw IOException("下载不完整 $done/$verifyTotal: $url")
                 }

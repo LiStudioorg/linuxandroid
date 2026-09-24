@@ -1,22 +1,33 @@
 package com.li63050a.linuxandroid
 
 /**
- * 单个发行版的清单条目，对应 assets/rootfs_manifest.json 中的一个对象。
+ * 发行版家族（主卡片）：Alpine / Debian / Ubuntu。
+ */
+data class DistroFamily(
+    val id: String,
+    val name: String,
+    val icon: String,
+    val description: String,
+    val versions: List<DistroInfo>
+)
+
+/**
+ * 某个发行版下的一个具体版本，对应 assets/rootfs_manifest.json 中 versions[] 的一项。
  *
- * @property id         唯一标识，同时用作 rootfs 目录名
- * @property name       UI 显示名
- * @property description 简要描述
- * @property size       预计字节数（服务器未返回总长时作进度兜底，仅展示用）
+ * @property id         唯一标识，同时用作 rootfs 目录名，如 ubuntu-24.04
+ * @property familyId   所属发行版 id（alpine/debian/ubuntu）
+ * @property name       UI 显示的版本名，如 24.04 LTS
+ * @property size       预计字节数（进度兜底展示，不参与完整性判断）
  * @property url        主下载地址
- * @property mirrors    备用镜像地址，主源失败后依次尝试
- * @property sha256     小写十六进制校验值；空串表示跳过校验
- * @property format     压缩格式："tar.gz" 或 "tar.xz"
- * @property defaultShell guest 内的 shell 绝对路径
+ * @property mirrors    备用镜像
+ * @property sha256     小写十六进制；空串跳过校验
+ * @property format     tar.gz / tar.xz
+ * @property defaultShell guest 内 shell 绝对路径
  */
 data class DistroInfo(
     val id: String,
+    val familyId: String,
     val name: String,
-    val description: String,
     val size: Long,
     val url: String,
     val mirrors: List<String>,
@@ -24,10 +35,9 @@ data class DistroInfo(
     val format: String,
     val defaultShell: String
 ) {
-    /** 候选下载地址：主源在前，备用镜像依次在后 */
     val allUrls: List<String>
         get() = buildList {
-            add(url)
+            if (url.isNotBlank()) add(url)
             addAll(mirrors)
         }
 }

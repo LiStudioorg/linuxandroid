@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_page"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="8dp">
 
-    <!-- 顶部：圆角搜索框 + 放大镜 -->
+    <!-- 顶部：圆角搜索框 -->
     <EditText
         android:id="@+id/edit_search"
         android:layout_width="match_parent"
-        android:layout_height="44dp"
+        android:layout_height="42dp"
         android:background="@drawable/bg_search"
         android:drawableStart="@drawable/ic_search"
         android:drawablePadding="8dp"
@@ -25,12 +26,12 @@
         android:textColorHint="@color/text_secondary"
         android:textSize="14sp" />
 
-    <!-- 中间：深色终端输出区 -->
+    <!-- 纯黑终端输出区（Termux 风格） -->
     <ScrollView
         android:id="@+id/scroll_output"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="8dp"
         android:layout_weight="1"
         android:background="@drawable/bg_terminal"
         android:fillViewport="true"
@@ -49,11 +50,66 @@
             android:textSize="13sp" />
     </ScrollView>
 
-    <!-- 底部：命令输入 + 圆角发送按钮 -->
+    <!-- 快捷键栏：ESC / CTRL / TAB / 方向键 -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_key_esc"
+                style="@style/App.Key"
+                android:text="@string/hotkey_esc" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_key_ctrl"
+                style="@style/App.Key"
+                android:layout_marginStart="6dp"
+                android:text="@string/hotkey_ctrl" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_key_tab"
+                style="@style/App.Key"
+                android:layout_marginStart="6dp"
+                android:text="@string/hotkey_tab" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_key_up"
+                style="@style/App.Key"
+                android:layout_marginStart="6dp"
+                android:text="@string/hotkey_up" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_key_down"
+                style="@style/App.Key"
+                android:layout_marginStart="6dp"
+                android:text="@string/hotkey_down" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_key_left"
+                style="@style/App.Key"
+                android:layout_marginStart="6dp"
+                android:text="@string/hotkey_left" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_key_right"
+                style="@style/App.Key"
+                android:layout_marginStart="6dp"
+                android:text="@string/hotkey_right" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- 底部：命令输入 + 发送 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="8dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 

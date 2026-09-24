@@ -7,8 +7,13 @@
             android:title="@string/nav_terminal" />
         <item
             android:id="@+id/nav_distros"
+            android:checked="true"
             android:icon="@drawable/ic_distro"
             android:title="@string/nav_distros" />
+        <item
+            android:id="@+id/nav_logs"
+            android:icon="@drawable/ic_logs"
+            android:title="@string/nav_logs" />
         <item
             android:id="@+id/nav_settings"
             android:icon="@drawable/ic_settings"

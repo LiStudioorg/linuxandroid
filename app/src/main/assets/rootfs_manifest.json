@@ -1,40 +1,125 @@
 {
-  "version": 1,
+  "version": 2,
   "distros": [
     {
-      "id": "alpine-3.20",
-      "name": "Alpine 3.20",
+      "id": "alpine",
+      "name": "Alpine Linux",
+      "icon": "alpine",
       "description": "轻量级 musl Linux，体积最小，适合快速体验",
-      "size": 3200000,
-      "url": "https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/aarch64/alpine-minirootfs-3.20.3-aarch64.tar.gz",
-      "mirrors": [
-        "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.20/releases/aarch64/alpine-minirootfs-3.20.3-aarch64.tar.gz"
-      ],
-      "sha256": "041fa34a81788242df9e78fa69b97ab45b8ec47ddbf88864755610414a7bf3de",
-      "format": "tar.gz",
-      "defaultShell": "/bin/sh"
+      "versions": [
+        {
+          "id": "alpine-3.20",
+          "name": "3.20",
+          "size": 4000000,
+          "url": "https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/aarch64/alpine-minirootfs-3.20.3-aarch64.tar.gz",
+          "mirrors": [
+            "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.20/releases/aarch64/alpine-minirootfs-3.20.3-aarch64.tar.gz"
+          ],
+          "sha256": "041fa34a81788242df9e78fa69b97ab45b8ec47ddbf88864755610414a7bf3de",
+          "format": "tar.gz",
+          "defaultShell": "/bin/sh"
+        },
+        {
+          "id": "alpine-3.19",
+          "name": "3.19",
+          "size": 3500000,
+          "url": "https://dl-cdn.alpinelinux.org/alpine/v3.19/releases/aarch64/alpine-minirootfs-3.19.7-aarch64.tar.gz",
+          "mirrors": [
+            "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.19/releases/aarch64/alpine-minirootfs-3.19.7-aarch64.tar.gz"
+          ],
+          "sha256": "edff55343f93f873841045a017074077a3a0675463bd978abe73acec71417c28",
+          "format": "tar.gz",
+          "defaultShell": "/bin/sh"
+        },
+        {
+          "id": "alpine-3.18",
+          "name": "3.18",
+          "size": 3500000,
+          "url": "https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/aarch64/alpine-minirootfs-3.18.10-aarch64.tar.gz",
+          "mirrors": [
+            "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.18/releases/aarch64/alpine-minirootfs-3.18.10-aarch64.tar.gz"
+          ],
+          "sha256": "f7eac18cdcede0e062265d2e23c09935dec220c756c47dc3e36805549622a93a",
+          "format": "tar.gz",
+          "defaultShell": "/bin/sh"
+        }
+      ]
     },
     {
-      "id": "debian-12",
-      "name": "Debian 12",
+      "id": "debian",
+      "name": "Debian",
+      "icon": "debian",
       "description": "稳定通用的发行版，软件仓库丰富",
-      "size": 60000000,
-      "url": "https://github.com/termux/proot-distro/releases/download/v3.10.0/debian-aarch64-pd-v3.10.0.tar.xz",
-      "mirrors": [],
-      "sha256": "",
-      "format": "tar.xz",
-      "defaultShell": "/bin/bash"
+      "versions": [
+        {
+          "id": "debian-13",
+          "name": "13 (Trixie)",
+          "size": 35407044,
+          "url": "https://github.com/termux/proot-distro/releases/download/v4.26.0/debian-trixie-aarch64-pd-v4.26.0.tar.xz",
+          "mirrors": [],
+          "sha256": "",
+          "format": "tar.xz",
+          "defaultShell": "/bin/bash"
+        },
+        {
+          "id": "debian-12",
+          "name": "12 (Bookworm)",
+          "size": 42912980,
+          "url": "https://github.com/termux/proot-distro/releases/download/v4.17.3/debian-bookworm-aarch64-pd-v4.17.3.tar.xz",
+          "mirrors": [],
+          "sha256": "",
+          "format": "tar.xz",
+          "defaultShell": "/bin/bash"
+        },
+        {
+          "id": "debian-11",
+          "name": "11 (Bullseye)",
+          "size": 37117408,
+          "url": "https://github.com/termux/proot-distro/releases/download/v4.7.0/debian-bullseye-aarch64-pd-v4.7.0.tar.xz",
+          "mirrors": [],
+          "sha256": "",
+          "format": "tar.xz",
+          "defaultShell": "/bin/bash"
+        }
+      ]
     },
     {
-      "id": "ubuntu-24.04",
-      "name": "Ubuntu 24.04",
+      "id": "ubuntu",
+      "name": "Ubuntu",
+      "icon": "ubuntu",
       "description": "热门桌面/服务器发行版 base 系统",
-      "size": 31000000,
-      "url": "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04.3/release/ubuntu-base-24.04.3-base-arm64.tar.gz",
-      "mirrors": [],
-      "sha256": "7b2dced6dd56ad5e4a813fa25c8de307b655fdabc6ea9213175a92c48dabb048",
-      "format": "tar.gz",
-      "defaultShell": "/bin/bash"
+      "versions": [
+        {
+          "id": "ubuntu-24.04",
+          "name": "24.04 LTS",
+          "size": 29000000,
+          "url": "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04.5/release/ubuntu-base-24.04.5-base-arm64.tar.gz",
+          "mirrors": [],
+          "sha256": "a91d5a93010193712d346d761372b7c9db6dfcf093893161c64ca107f05914f2",
+          "format": "tar.gz",
+          "defaultShell": "/bin/bash"
+        },
+        {
+          "id": "ubuntu-22.04",
+          "name": "22.04 LTS",
+          "size": 26500000,
+          "url": "https://cdimage.ubuntu.com/ubuntu-base/releases/22.04.5/release/ubuntu-base-22.04.5-base-arm64.tar.gz",
+          "mirrors": [],
+          "sha256": "075d4abd2817a5023ab0a82f5cb314c5ec0aa64a9c0b40fd3154ca3bfdae979f",
+          "format": "tar.gz",
+          "defaultShell": "/bin/bash"
+        },
+        {
+          "id": "ubuntu-20.04",
+          "name": "20.04 LTS",
+          "size": 26000000,
+          "url": "https://cdimage.ubuntu.com/ubuntu-base/releases/20.04.5/release/ubuntu-base-20.04.5-base-arm64.tar.gz",
+          "mirrors": [],
+          "sha256": "f9b999afb4c4b10193087ea8c11be36d688f19e609b05179b571f29357954b52",
+          "format": "tar.gz",
+          "defaultShell": "/bin/bash"
+        }
+      ]
     }
   ]
 }

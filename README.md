@@ -9,21 +9,23 @@
 
 ## 功能
 
-- 现代化浅色 Material 界面：**侧边栏抽屉**导航（终端 / 发行版管理 / 设置），默认进入终端
-- 终端页：顶部搜索框过滤输出、深色等宽终端区（自动滚底）、圆角命令输入与发送按钮
-- 发行版管理：**卡片列表**（Alpine / Debian / Ubuntu），圆形字母图标 + 大小描述 + 操作按钮；下载中卡片内显示进度条与百分比
+- 现代化浅色 Material 界面：**侧边栏抽屉**导航（终端 / 发行版管理 / 日志 / 设置），默认进入**发行版管理**
+- **三发行版家族 + 多历史版本**：Alpine 3.20/3.19/3.18、Debian 13/12/11、Ubuntu 24.04/22.04/20.04，选家族 → 选版本下载
+- 终端页：搜索框过滤输出、**纯黑等宽终端**（自动滚底）、**快捷键行**（ESC / CTRL / TAB / 方向键）、圆角命令输入与发送
+- 终端返回键：会话运行中弹「保持运行 / 关闭终端」
 - 一键下载，实时进度；**断点续传**（`.part` + HTTP Range）；**多镜像自动回退**
 - SHA256 校验（清单有值才校验）
 - 解压保留符号链接与 rwx 权限位，防路径穿越；先临时目录、成功后**原子重命名**再写 `.installed`
-- 安装完成卡片按钮变“启动”，PRoot 拉起持久 shell；设置页含版本信息与 GitHub 仓库链接
+- **全局日志**（AppLogger）：内存缓冲 + 文件落盘，闪退堆栈自动写入；日志页可刷新/清空/复制/**一键分享**（FileProvider）
+- 设置页含版本信息与 GitHub 仓库链接
 
 ## PRoot 二进制从哪来
 
-### 方式一（推荐）：CI 自动下载
+**已随仓库入库**：`app/src/main/jniLibs/arm64-v8a/libproot.so` 与 `libproot-loader.so` 已提交（`.gitignore` 不排除），CI 直接打包，无需再下载。运行期依赖 `libtalloc.so.2`、`libandroid-shmem.so` 见下文，亦已入库。
 
-`.github/workflows/android.yml` 在编译前执行 `Fetch PRoot binaries from Termux deb`：
+如需重新从 Termux deb 提取（兜底）：
 
-1. 下载 `proot_5.1.107.94_aarch64.deb`
+1. 下载最新 `proot_*_aarch64.deb`
    （仓库：<https://packages.termux.dev/apt/termux-main/pool/main/p/proot/>）
 2. `dpkg-deb -x` 解开（或 7-Zip / `ar`）
 3. 拷贝两份文件到 `app/src/main/jniLibs/arm64-v8a/`：
@@ -31,12 +33,6 @@
    - `data/data/com.termux/files/usr/libexec/proot/loader` → **`libproot-loader.so`**
      （个别旧版本在 `usr/lib/proot-loader`，以 deb 实际内容为准）
 4. `chmod 755`
-
-因此 `*.so` **不入库**（见 `.gitignore`）也能正常出包；文件已存在则自动跳过。
-
-### 方式二：本地手动放置
-
-在 Android Studio / 本地构建 `assembleRelease` 前，按上文 1–4 步手动把两个文件放进 `jniLibs/arm64-v8a/`。
 
 ### 运行期依赖（已入库，无需操作）
 
@@ -93,15 +89,16 @@ git remote -v
 # origin  git@github.com:LiStudioorg/linuxandroid.git (fetch/push)
 ```
 
-推送：`git push -u origin master`（或先 `git branch -m main`）。
+推送：`git push origin main`（远程为 SSH `git@github.com:LiStudioorg/linuxandroid.git`）。
 
 ## 使用方法
 
-1. 侧边栏进入「发行版管理」，点击卡片“下载” → 进度显示在卡片内（可中断，再次点击**断点续传**，主源失败自动换镜像）
-2. 校验 SHA256 → 解压 → 卡片按钮变“启动”
-3. 点击“启动”自动跳转「终端」页；输入命令（如 `ls`、`cat /etc/os-release`）点“发送”或键盘发送键
-4. 顶部搜索框可过滤终端输出行；「设置」页可查看信息、打开 GitHub、清空终端
-5. rootfs 位于 `filesDir/rootfs/<id>`，重装＝清除应用数据
+1. 侧边栏默认「发行版管理」：点家族卡片进入**版本选择**，选版本点“下载” → 进度显示（可中断，再点**断点续传**，主源失败自动换镜像）
+2. 校验 SHA256 → 解压 → 按钮变“启动”
+3. 点击“启动”进入「终端」页；输入命令（如 `ls`、`cat /etc/os-release`）点“发送”或键盘发送键
+4. 快捷键：ESC / CTRL（+字母键）/ TAB / 方向键；搜索框过滤输出；退出会话时选「保持运行 / 关闭终端」
+5. 「日志」页查看/复制/分享 AppLogger 日志；「设置」页查看信息、打开 GitHub、清空终端
+6. rootfs 位于 `filesDir/rootfs/<versionId>`，重装＝清除应用数据
 
 ```sh
 cat /etc/os-release     # 查看发行版
@@ -117,7 +114,7 @@ exit
 | --- | --- |
 | 无提示符、输入不回显 | 非 PTY 属正常，命令已执行；输入 `sh -i` / `bash -i` |
 | 启动提示“缺少 PRoot” | 按上文放入两个 `.so` 后重新打包 |
-| 点发送无反应 / 秒退 | 多半是 APK 缺 `libproot.so`（没走 CI 拉取也没手动放）或缺运行库，重装完整产物 |
+| 点发送无反应 / 秒退 | 多半是 APK 缺 `libproot.so` 或缺运行库，检查 `jniLibs`/`assets/native` 后重新打包；完整堆栈见「日志」页 |
 | 下载中断 | 再点“下载”，`.part` 自动续传 |
 | SHA256 失败 | 自动删除坏文件，重新下载即可 |
 | 空间不足 | 下载+解压建议预留 500MB |

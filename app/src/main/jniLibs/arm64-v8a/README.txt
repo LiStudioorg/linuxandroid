@@ -22,9 +22,9 @@ PRoot 二进制放置说明（arm64-v8a）
 2. libproot.so 另依赖 libtalloc.so.2 与 libandroid-shmem.so，
    已随仓库放在 app/src/main/assets/native/arm64-v8a/，
    运行时由 NativeDeps 释放并通过 LD_LIBRARY_PATH 注入，无需放入本目录。
-3. 本目录 *.so 已被 .gitignore 排除，不会提交进版本库；
-   GitHub Actions 构建时会自动从 Termux 仓库下载（见 .github/workflows/android.yml
-   的 “Fetch PRoot binaries from Termux deb” 步骤），文件已存在则跳过。
+3. 本目录 *.so 已随仓库入库（.gitignore 未排除，git ls-files 可见），
+   CI 直接打包，无需再从 Termux 仓库下载；若 workflow 中存在
+   “Fetch PRoot binaries from Termux deb” 步骤，文件已存在则跳过（兜底）。
 4. AndroidManifest 已配置 extractNativeLibs=true，
    app/build.gradle.kts 已配置 packaging.jniLibs.useLegacyPackaging=true，
    安装时会将本目录 so 解压到 nativeLibraryDir 并可直接执行。
