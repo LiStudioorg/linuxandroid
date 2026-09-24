@@ -8,11 +8,6 @@ local.properties
 .cxx/
 .DS_Store
 
-# PRoot 二进制不入库，由开发者本地提取或 CI 从 Termux 仓库下载
-app/src/main/jniLibs/**/*.so
-!app/src/main/jniLibs/**/README.txt
-
-# assets 中的运行库依赖（libtalloc/libandroid-shmem）需要入库，CI 见缺失再补拉
-
+# PRoot 二进制（libproot.so / libproot-loader.so）已随仓库提交，CI 直接打包
 # 下载缓存
 *.part
