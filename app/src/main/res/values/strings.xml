@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ProotTerm</string>
+    <string name="app_title">Linux 终端（PRoot · 无需 root）</string>
+    <string name="btn_distro_placeholder">发行版</string>
+    <string name="btn_send">发送</string>
+    <string name="status_idle">就绪：点击上方按钮下载发行版，或启动已安装的环境</string>
+    <string name="hint_command">输入命令，如 ls</string>
+    <string name="terminal_placeholder">终端输出将显示在这里。启动后可输入命令，例如：ls / cat /etc/os-release\n首次启动无提示符时可输入：sh -i</string>
+</resources>

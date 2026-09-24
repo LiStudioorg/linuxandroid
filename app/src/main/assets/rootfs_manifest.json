@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "distros": [
+    {
+      "id": "alpine-3.20",
+      "name": "Alpine 3.20",
+      "description": "轻量级 musl Linux，体积最小，适合快速体验",
+      "size": 3200000,
+      "url": "https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/aarch64/alpine-minirootfs-3.20.3-aarch64.tar.gz",
+      "mirrors": [
+        "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.20/releases/aarch64/alpine-minirootfs-3.20.3-aarch64.tar.gz"
+      ],
+      "sha256": "041fa34a81788242df9e78fa69b97ab45b8ec47ddbf88864755610414a7bf3de",
+      "format": "tar.gz",
+      "defaultShell": "/bin/sh"
+    },
+    {
+      "id": "debian-12",
+      "name": "Debian 12",
+      "description": "稳定通用的发行版，软件仓库丰富",
+      "size": 60000000,
+      "url": "https://github.com/termux/proot-distro/releases/download/v3.10.0/debian-aarch64-pd-v3.10.0.tar.xz",
+      "mirrors": [],
+      "sha256": "",
+      "format": "tar.xz",
+      "defaultShell": "/bin/bash"
+    },
+    {
+      "id": "ubuntu-24.04",
+      "name": "Ubuntu 24.04",
+      "description": "热门桌面/服务器发行版 base 系统",
+      "size": 31000000,
+      "url": "https://cdimage.ubuntu.com/ubuntu-base/releases/24.04.3/release/ubuntu-base-24.04.3-base-arm64.tar.gz",
+      "mirrors": [],
+      "sha256": "7b2dced6dd56ad5e4a813fa25c8de307b655fdabc6ea9213175a92c48dabb048",
+      "format": "tar.gz",
+      "defaultShell": "/bin/bash"
+    }
+  ]
+}
