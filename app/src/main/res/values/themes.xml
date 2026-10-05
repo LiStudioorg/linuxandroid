@@ -56,12 +56,14 @@
         4. 代码侧把 importantForAutofill 设为 no 且禁用自动纠错/联想，
            避免输入法把它当作用户名/密码框。
 
-      同时 typing 时禁用 suggestions（autoCorrect=false）以免终端命令被改写。
+      禁用联想完全由 inputType 里的 textNoSuggestions 标志承担。
+       ⚠️ 不要写 android:autoCorrect —— 它不是框架属性（只是 IDE 建议），
+       android.jar 中不存在，写进 style 会导致 AAPT 链接失败：
+       error: style attribute 'android:attr/autoCorrect' not found。
     -->
     <style name="App.TerminalInput" parent="Widget.AppCompat.EditText">
         <item name="android:inputType">textVisiblePassword|textNoSuggestions|textMultiLine</item>
         <item name="android:imeOptions">actionNone|flagNoExtractUi|flagNoFullscreen</item>
-        <item name="android:autoCorrect">false</item>
         <item name="android:fontFamily">monospace</item>
         <item name="android:textColor">@color/text_primary</item>
         <item name="android:textColorHint">@color/text_secondary</item>
