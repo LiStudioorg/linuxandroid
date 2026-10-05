@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  CTRL 组合键按钮模板：由 MainActivity.buildCtrlLetterRow() 动态 inflate 26 次。
+  单独放一个布局而不是手写 26 个按钮，是为了让 style 走正常的 XML 样式解析
+  （MaterialButton(Context) 构造函数只认 R.attr.materialButtonStyle，无法应用 App.Key）。
+-->
+<com.google.android.material.button.MaterialButton
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/App.Key"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content" />

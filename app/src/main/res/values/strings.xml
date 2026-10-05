@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">linuxandroid</string>
+    <string name="app_name">ProotTerm</string>
 
     <!-- 侧边栏导航 -->
     <string name="nav_terminal">终端</string>
     <string name="nav_distros">发行版</string>
+    <string name="nav_myapps">我的系统</string>
     <string name="nav_logs">日志</string>
     <string name="nav_settings">设置</string>
     <string name="app_subtitle">免 root 的 Linux 环境</string>
@@ -13,35 +14,73 @@
     <string name="search_hint">搜索命令输出…</string>
     <string name="hint_command">输入命令，如 ls</string>
     <string name="btn_send">发送</string>
-    <string name="terminal_empty">终端输出将显示在这里。\n启动 shell 后可输入命令，例如：ls / cat /etc/os-release\n无提示符时可输入：sh -i</string>
+    <string name="terminal_empty">终端输出将显示在这里。\n先在「我的系统」启动一个已安装的系统，即可输入命令。\n无提示符时可输入：sh -i</string>
     <string name="status_idle">就绪：在「发行版」下载版本，或启动已安装环境</string>
+    <string name="status_ctrl_armed">CTRL 已按下，再点下方字母键</string>
+    <string name="status_alt_armed">ALT 已按下，再点下方字母键</string>
+    <string name="status_session_running_fmt">%1$s 运行中</string>
     <string name="hotkey_esc">ESC</string>
     <string name="hotkey_ctrl">CTRL</string>
+    <string name="hotkey_alt">ALT</string>
     <string name="hotkey_tab">TAB</string>
+    <string name="hotkey_enter">回车</string>
+    <string name="hotkey_pipe">|</string>
+    <string name="hotkey_slash">/</string>
+    <string name="hotkey_home">HOME</string>
+    <string name="hotkey_end">END</string>
+    <string name="hotkey_pgup">PGUP</string>
+    <string name="hotkey_pgdn">PGDN</string>
     <string name="hotkey_up">↑</string>
     <string name="hotkey_down">↓</string>
     <string name="hotkey_left">←</string>
     <string name="hotkey_right">→</string>
+    <string name="send_empty">请输入命令</string>
+    <string name="output_truncated">… 输出过长，已丢弃最旧的部分 …</string>
+
+    <!-- 我的系统（已安装列表） -->
+    <string name="myapps_header">已安装的系统。点「启动」进入终端；同时只运行一个系统，切换会自动结束上一个。</string>
+    <string name="myapps_empty">还没有安装任何系统。\n请到「发行版」页下载一个版本。</string>
+    <string name="myapps_none_in_location">当前存储位置没有已安装的系统。\n请到「发行版」页下载，或到设置页切换存储位置。</string>
+    <string name="myapps_other_location_fmt">另有 %1$d 个系统安装在「%2$s」，切换存储位置后可用（切换不迁移数据）</string>
+    <string name="myapps_running">运行中</string>
+    <string name="myapps_custom_suffix"> · 自定义</string>
+    <string name="myapps_unknown_suffix"> · 版本未知</string>
+    <string name="myapps_location_fmt">存储位置：%1$s</string>
+    <string name="btn_goto_distros">去下载系统</string>
+    <string name="btn_open_terminal">打开终端</string>
 
     <!-- 终端退出对话框 -->
     <string name="dlg_exit_title">终端</string>
-    <string name="dlg_exit_message">选择「保持运行」可在下次直接回到当前会话；选择「关闭终端」将结束 shell 进程。</string>
-    <string name="btn_keep_alive">保持运行</string>
-    <string name="btn_close_terminal">关闭终端</string>
+    <string name="dlg_exit_message">「后台保持运行」：切到应用其他页面或退到后台后，shell 仍在前台服务里继续执行，通知栏常驻；随时可在通知里点「结束」或回到终端页结束。「结束会话」：立即结束 shell 进程。</string>
+    <string name="btn_keep_alive">后台保持运行</string>
+    <string name="btn_close_terminal">结束会话</string>
     <string name="btn_cancel">取消</string>
+    <string name="status_session_kept">会话在后台继续运行</string>
+    <string name="status_session_closed">会话已结束</string>
 
     <!-- 发行版 / 版本 -->
     <string name="distros_header">选择发行版，再选择要下载的版本</string>
     <string name="versions_header_fmt">%1$s 版本列表</string>
+    <string name="versions_installed_here">已安装（当前存储位置）</string>
+    <string name="versions_installed_elsewhere_fmt">已安装在「%1$s」，切换存储位置或重新安装</string>
+    <string name="versions_download_target_fmt">将安装到：%1$s</string>
     <string name="family_versions_fmt">%1$d 个版本可下载</string>
     <string name="btn_download">下载</string>
+    <string name="btn_download_again">重新下载</string>
     <string name="btn_start">启动</string>
     <string name="btn_pick_version">选择版本</string>
     <string name="btn_uninstall">卸载</string>
+    <string name="btn_cancelling">取消中…</string>
+    <string name="state_cancelling">取消中</string>
+    <string name="state_installed">已安装</string>
     <string name="btn_uninstall_confirm">确认卸载</string>
     <string name="dlg_uninstall_title">卸载版本？</string>
     <string name="dlg_uninstall_message">将删除已下载的 rootfs，可重新下载恢复。</string>
     <string name="toast_not_installed">该版本尚未安装，请先下载</string>
+    <string name="toast_install_busy">已有下载/安装任务进行中…</string>
+    <string name="install_done_fmt">%1$s 安装完成，点击「启动」</string>
+    <string name="install_failed_fmt">安装失败：%1$s</string>
+    <string name="start_failed_fmt">启动失败：%1$s</string>
 
     <!-- 日志 -->
     <string name="logs_empty">（暂无日志）</string>
@@ -49,9 +88,23 @@
     <string name="btn_copy_log">复制</string>
     <string name="btn_refresh">刷新</string>
     <string name="btn_clear_log">清空</string>
-    <string name="share_log_subject">linuxandroid 运行日志</string>
+    <string name="share_log_subject">ProotTerm 运行日志</string>
     <string name="toast_copied">已复制到剪贴板</string>
     <string name="toast_log_cleared">日志已清空</string>
+
+    <!-- 通知 -->
+    <string name="notif_channel_name">PRoot 会话</string>
+    <string name="notif_channel_desc">显示正在运行的 Linux 会话，避免被系统回收</string>
+    <string name="notif_action_stop">结束</string>
+    <string name="notif_starting">正在启动 PRoot 会话…</string>
+    <string name="notif_running">PRoot 会话运行中，点击返回终端</string>
+    <string name="notif_stopping">正在结束 PRoot 会话…</string>
+    <string name="notif_idle">无运行中的会话</string>
+    <string name="start_aborted_by_user">启动已取消</string>
+    <string name="start_failed_not_found_fmt">清单中找不到版本 %1$s</string>
+    <string name="start_failed_not_installed_fmt">%1$s 尚未安装，无法启动</string>
+    <string name="start_failed_not_installed_autostart_fmt">%1$s 尚未安装，无法开机自启动</string>
+    <string name="notif_start_failed_fmt">启动失败：%1$s</string>
 
     <!-- 设置页 -->
     <string name="settings_header">应用信息</string>
@@ -63,4 +116,82 @@
     <string name="settings_github">GitHub：https://github.com/LiStudioorg/linuxandroid/</string>
     <string name="btn_clear_terminal">清空终端输出</string>
     <string name="settings_about">基于 PRoot（Termux 适配版）实现的免 root Linux 容器环境。rootfs 解压与运行均在应用私有目录完成，无需任何特殊权限。</string>
+
+    <!-- 设置页：存储位置 -->
+    <string name="storage_section">存储位置</string>
+    <string name="storage_internal_title">内部存储</string>
+    <string name="storage_internal_desc">/data/data/包名/files\n读写最快；随应用卸载一起删除。</string>
+    <string name="storage_external_title">外部存储</string>
+    <string name="storage_external_desc">/Android/data/包名/files\n容量通常更大，同样无需存储权限；Android 11+ 部分设备不允许在此执行程序。</string>
+    <string name="storage_current_fmt">当前：%1$s\n%2$s</string>
+    <string name="storage_unavailable">外部存储当前不可用（未挂载或本机不支持）</string>
+    <string name="storage_fallback_warning">外部存储不可用，已退回内部存储</string>
+    <string name="storage_switch_title">切换存储位置？</string>
+    <string name="storage_switch_message">切换只影响之后安装的系统：已安装的系统仍留在原位置，不会自动迁移。\n\n要让已有系统出现在新位置，需要在新位置重新下载安装。</string>
+    <string name="storage_switch_confirm">切换</string>
+    <string name="toast_storage_switched">存储位置已切换：%1$s</string>
+    <string name="toast_storage_unavailable">该位置不可用，未切换</string>
+
+    <!-- 设置页：开机自启动 -->
+    <string name="autostart_section">开机自启动</string>
+    <string name="autostart_switch">开机后自动启动所选系统的 shell</string>
+    <string name="autostart_desc">系统启动完成后，在后台前台服务里拉起所选系统的 shell，可从通知进入终端。\n部分定制系统（MIUI / EMUI / ColorOS 等）还需在系统设置里额外允许本应用「自启动」与「后台运行」。</string>
+    <string name="autostart_pick">自启动系统</string>
+    <string name="autostart_none">未选择</string>
+    <string name="autostart_pick_title">选择开机自启动的系统</string>
+    <string name="autostart_no_installed">当前存储位置没有已安装的系统，请先下载</string>
+    <string name="autostart_set_fmt">自启动目标已设为：%1$s</string>
+    <string name="autostart_cleared">已关闭开机自启动</string>
+    <string name="autostart_need_target">请先选择一个自启动系统</string>
+    <!-- ============ 多实例 / 资源限制 / 镜像 / 换源 ============ -->
+    <string name="toast_instances_parallel">已有 %1$d 个其他实例在运行，本次将并行启动</string>
+    <string name="status_instances_running_fmt">%1$d 个实例运行中</string>
+
+    <!-- 资源限制 -->
+    <string name="limits_title">资源限制</string>
+    <string name="limits_subtitle">仅对新启动的会话生效，修改后需重启该实例</string>
+    <string name="limits_preset">预设</string>
+    <string name="limits_memory">虚拟内存上限（MB）</string>
+    <string name="limits_memory_hint">限制的是地址空间而非物理内存；0 表示不限制。低于 64MB 可能导致动态链接器无法启动</string>
+    <string name="limits_processes">最大进程 / 线程数</string>
+    <string name="limits_open_files">最大文件描述符数</string>
+    <string name="limits_cpu">CPU 时间上限（秒）</string>
+    <string name="limits_cpu_hint">限制的是进程累计消耗的 CPU 时间，超限将被内核强制结束；不是 CPU 核数，也不是限速。0 表示不限制</string>
+    <string name="limits_stack">栈大小上限（MB）</string>
+    <string name="limits_saved">资源限制已保存，重启该实例后生效</string>
+    <string name="limits_invalid">请输入非负整数</string>
+    <string name="btn_instance_settings">实例设置</string>
+
+    <!-- 镜像 -->
+    <string name="mirror_title">下载镜像</string>
+    <string name="mirror_auto">自动优选（并发测速，选最快的镜像）</string>
+    <string name="mirror_auto_hint">测速失败时会回退到清单原始顺序，不影响下载</string>
+    <string name="mirror_custom">自定义镜像源</string>
+    <string name="mirror_custom_hint">仅支持 http/https；留空表示只用清单内置镜像</string>
+    <string name="mirror_custom_invalid">地址必须以 http:// 或 https:// 开头</string>
+    <string name="mirror_speedtest">测速</string>
+    <string name="mirror_speedtesting">正在测速 …</string>
+    <string name="mirror_probe_result_fmt">%1$s — %2$d ms</string>
+    <string name="mirror_probe_failed">全部镜像均不可达，将使用清单原始顺序</string>
+    <string name="mirror_threads">下载线程数</string>
+    <string name="mirror_threads_hint">1~8；服务端不支持分段下载时会自动改为单线程</string>
+
+    <!-- 换源 -->
+    <string name="apt_title">软件源（换源）</string>
+    <string name="apt_subtitle">仅对已安装的系统有效；换源前会自动备份原始源</string>
+    <string name="apt_not_switched">当前使用发行版原始源</string>
+    <string name="apt_switched_fmt">已换源：%1$s</string>
+    <string name="apt_switch">换源</string>
+    <string name="apt_restore">恢复原始源</string>
+    <string name="apt_switch_ok_fmt">换源成功：%1$s</string>
+    <string name="apt_switch_failed_fmt">换源失败：%1$s</string>
+    <string name="apt_restore_ok_fmt">已恢复：%1$s</string>
+    <string name="apt_restore_failed_fmt">恢复失败：%1$s</string>
+    <string name="apt_running_warning">该实例正在运行，换源后需重启会话才会生效</string>
+
+    <!-- 通用 -->
+    <string name="btn_save">保存</string>
+    <string name="dlg_limits_title_fmt">%1$s · 资源限制</string>
+    <string name="limits_summary_fmt">资源限制：%1$s</string>
+    <string name="apt_mirror_pick">选择软件源</string>
 </resources>

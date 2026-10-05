@@ -2,6 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 开机自启动：BOOT_COMPLETED 是普通权限，无需运行时申请 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!--
+      PRoot shell 需要在前台服务里长期运行（「后台保持运行」与「开机自启动」）。
+      Android 14+ 要求声明具体的前台服务类型，dataSync 与「用户主动发起的
+      长时数据同步/计算」语义相符，且在应用退到后台时不会被立即切断。
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- 常驻通知（API 33+ 需运行时申请；拒绝则服务仍可运行，只是通知不可见） -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".App"
@@ -27,6 +38,25 @@
             android:name=".LogActivity"
             android:exported="false"
             android:label="@string/nav_logs" />
+
+        <!-- PRoot 会话宿主：前台服务，保证 shell 在应用退到后台后继续运行 -->
+        <service
+            android:name=".ProotService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"
+            android:stopWithTask="false" />
+
+        <!-- 开机自启动入口；exported 必须为 true，否则收不到系统广播 -->
+        <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <!-- 应用被覆盖安装后系统也会重启相关组件，同样需要拉起会话 -->
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
         <!-- 日志一键分享（禁止 file://，必须 content://） -->
         <provider

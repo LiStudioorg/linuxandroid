@@ -42,4 +42,30 @@
         <item name="android:insetTop">2dp</item>
         <item name="android:insetBottom">2dp</item>
     </style>
+
+    <!--
+      终端命令输入框样式。**不是普通文本输入框**，需同时满足 4 个条件
+      才能避开国产 ROM 的「安全键盘」：
+
+        1. inputType 为 textVisiblePassword（TYPE_TEXT_VARIATION_VISIBLE_PASSWORD）：
+           这是唯一能同时保持 (a) 不进入密码安全键盘 且 (b) 支持多字符输入的
+           变体。textPassword / textWebPassword 会强制触发安全键盘。
+        2. imeOptions 不是 actionSend/actionSearch 等「动作」类型：安全键盘的
+           触发判定也看 imeOptions，用 IME_ACTION_NONE 最稳。
+        3. 声明 imeHintLocales（由代码按需设置）不属于安全键盘场景。
+        4. 代码侧把 importantForAutofill 设为 no 且禁用自动纠错/联想，
+           避免输入法把它当作用户名/密码框。
+
+      同时 typing 时禁用 suggestions（autoCorrect=false）以免终端命令被改写。
+    -->
+    <style name="App.TerminalInput" parent="Widget.AppCompat.EditText">
+        <item name="android:inputType">textVisiblePassword|textNoSuggestions|textMultiLine</item>
+        <item name="android:imeOptions">actionNone|flagNoExtractUi|flagNoFullscreen</item>
+        <item name="android:autoCorrect">false</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textColorHint">@color/text_secondary</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textCursorDrawable">@null</item>
+    </style>
 </resources>

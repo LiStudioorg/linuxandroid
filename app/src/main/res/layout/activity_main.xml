@@ -49,6 +49,13 @@
                 android:visibility="gone" />
 
             <include
+                android:id="@+id/view_myapps"
+                layout="@layout/view_myapps"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+
+            <include
                 android:id="@+id/view_settings"
                 layout="@layout/view_settings"
                 android:layout_width="match_parent"

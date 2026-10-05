@@ -43,17 +43,29 @@ class RootfsDownloader(
         }
     }
 
+    /**
+     * 依次尝试候选地址直到成功。
+     *
+     * @param urls 候选地址**按优先级排列**。默认用清单顺序，但调用方可以传入
+     *   经测速优选的顺序、或把用户自定义镜像排在最前（§8.20）。
+     *   ⚠️ 必须显式传入而不是每次都内部取 `distro.allUrls`：
+     *   那样会让测速排序与自定义镜像彻底失效（算完却没用上）。
+     * @param onProgress (已下载字节, 总字节)
+     */
     suspend fun download(
         distro: DistroInfo,
         partFile: File,
+        urls: List<String> = distro.allUrls,
         onProgress: (done: Long, total: Long) -> Unit
     ): File = withContext(Dispatchers.IO) {
+        val candidates = urls.ifEmpty { distro.allUrls }
         var lastError: Exception? = null
         AppLogger.i(
             "Downloader",
-            "start id=${distro.id} existing=${partFile.length()} urls=${distro.allUrls.size}"
+            "start id=${distro.id} existing=${partFile.length()} urls=${candidates.size} " +
+                "first=${candidates.firstOrNull()}"
         )
-        for (url in distro.allUrls) {
+        for (url in candidates) {
             ensureActive()
             try {
                 downloadFrom(url, distro, partFile, onProgress)

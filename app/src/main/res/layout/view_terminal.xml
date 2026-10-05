@@ -7,7 +7,7 @@
     android:orientation="vertical"
     android:padding="8dp">
 
-    <!-- 顶部：圆角搜索框 -->
+    <!-- 顶部：圆角搜索框（搜索终端输出，不发给 shell） -->
     <EditText
         android:id="@+id/edit_search"
         android:layout_width="match_parent"
@@ -50,7 +50,11 @@
             android:textSize="13sp" />
     </ScrollView>
 
-    <!-- 快捷键栏：ESC / CTRL / TAB / 方向键 -->
+    <!--
+      快捷键第 1 行：ESC / CTRL / ALT / TAB / 回车 / 符号
+      发的都是真实控制序列：ESC=\x1b、TAB=\x09、回车=\n、|=0x7C、/=0x2F，
+      CTRL/ALT 是「待命修饰键」，按下后展开字母行。
+    -->
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -74,15 +78,76 @@
                 android:text="@string/hotkey_ctrl" />
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_key_alt"
+                style="@style/App.Key"
+                android:layout_marginStart="6dp"
+                android:text="@string/hotkey_alt" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_key_tab"
                 style="@style/App.Key"
                 android:layout_marginStart="6dp"
                 android:text="@string/hotkey_tab" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_key_up"
+                android:id="@+id/btn_key_enter"
                 style="@style/App.Key"
                 android:layout_marginStart="6dp"
+                android:text="@string/hotkey_enter" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_key_pipe"
+                style="@style/App.Key"
+                android:layout_marginStart="6dp"
+                android:text="@string/hotkey_pipe" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_key_slash"
+                style="@style/App.Key"
+                android:layout_marginStart="6dp"
+                android:text="@string/hotkey_slash" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_key_home"
+                style="@style/App.Key"
+                android:layout_marginStart="6dp"
+                android:text="@string/hotkey_home" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_key_end"
+                style="@style/App.Key"
+                android:layout_marginStart="6dp"
+                android:text="@string/hotkey_end" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_key_pgup"
+                style="@style/App.Key"
+                android:layout_marginStart="6dp"
+                android:text="@string/hotkey_pgup" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_key_pgdn"
+                style="@style/App.Key"
+                android:layout_marginStart="6dp"
+                android:text="@string/hotkey_pgdn" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- 快捷键第 2 行：方向键（单独一行，避免第 1 行横滚太长） -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_key_up"
+                style="@style/App.Key"
                 android:text="@string/hotkey_up" />
 
             <com.google.android.material.button.MaterialButton
@@ -105,6 +170,22 @@
         </LinearLayout>
     </HorizontalScrollView>
 
+    <!-- CTRL / ALT 组合字母行：仅在对应修饰键待命时可见 -->
+    <HorizontalScrollView
+        android:id="@+id/scroll_ctrl_letters"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:scrollbars="none"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/group_ctrl_letters"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
+
     <!-- 底部：命令输入 + 发送 -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -113,22 +194,22 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <!--
+          style="@style/App.TerminalInput" 是避开国产 ROM 安全键盘的关键，
+          详见 themes.xml 中该样式的注释。
+        -->
         <EditText
             android:id="@+id/edit_command"
+            style="@style/App.TerminalInput"
             android:layout_width="0dp"
             android:layout_height="46dp"
             android:layout_weight="1"
             android:background="@drawable/bg_search"
-            android:fontFamily="monospace"
             android:hint="@string/hint_command"
-            android:imeOptions="actionSend"
-            android:inputType="text"
+            android:importantForAutofill="no"
             android:maxLines="1"
             android:paddingStart="14dp"
-            android:paddingEnd="14dp"
-            android:textColor="@color/text_primary"
-            android:textColorHint="@color/text_secondary"
-            android:textSize="14sp" />
+            android:paddingEnd="14dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_send"

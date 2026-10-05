@@ -2,12 +2,16 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <group android:checkableBehavior="single">
         <item
+            android:id="@+id/nav_myapps"
+            android:checked="true"
+            android:icon="@drawable/ic_distro"
+            android:title="@string/nav_myapps" />
+        <item
             android:id="@+id/nav_terminal"
             android:icon="@drawable/ic_terminal"
             android:title="@string/nav_terminal" />
         <item
             android:id="@+id/nav_distros"
-            android:checked="true"
             android:icon="@drawable/ic_distro"
             android:title="@string/nav_distros" />
         <item

@@ -25,6 +25,11 @@ object AppLogger {
     private var logFile: File? = null
     private val timeFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
 
+    /**
+     * 初始化日志目录。**始终使用内部 `filesDir/logs`**，不跟随用户的
+     * 「存储位置」选择：日志是排查存储位置本身出问题时的唯一线索，
+     * 必须放在最可靠的内部位置，也不能依赖外部存储是否已挂载。
+     */
     fun init(filesDir: File) {
         synchronized(lock) {
             try {

@@ -17,13 +17,24 @@ class VersionAdapter(
     private val items: List<DistroInfo>,
     private val onDownload: (DistroInfo) -> Unit,
     private val onStart: (DistroInfo) -> Unit,
-    private val onUninstall: (DistroInfo) -> Unit
+    private val onUninstall: (DistroInfo) -> Unit,
+    private val onCancelInstall: (DistroInfo) -> Unit
 ) : RecyclerView.Adapter<VersionAdapter.VH>() {
 
     sealed class State {
         data object Idle : State()
         data class Downloading(val percent: Int) : State()
+
+        /** 用户已请求取消，等待协程真正结束 */
+        data object Cancelling : State()
         data object Installed : State()
+
+        /**
+         * 已安装，但安装在**另一个存储位置**。
+         * 此时不能直接「启动」（当前位置没有 rootfs），
+         * 按钮显示为「重新下载」，并在副标题里说明原因。
+         */
+        data class InstalledElsewhere(val locationLabel: String) : State()
     }
 
     private val states = HashMap<String, State>()
@@ -70,15 +81,30 @@ class VersionAdapter(
                 holder.btnAction.isEnabled = true
                 holder.btnAction.text =
                     holder.itemView.context.getString(R.string.btn_download)
+                holder.btnCancel.visibility = View.GONE
                 holder.btnUninstall.visibility = View.GONE
             }
             is State.Downloading -> {
                 holder.progressGroup.visibility = View.VISIBLE
                 holder.btnAction.visibility = View.GONE
+                holder.btnCancel.visibility = View.VISIBLE
+                holder.btnCancel.isEnabled = true
+                holder.btnCancel.text = holder.itemView.context.getString(R.string.btn_cancel)
                 holder.btnUninstall.visibility = View.GONE
                 val pct = state.percent.coerceIn(0, 100)
                 holder.progressBar.progress = pct
                 holder.percent.text = "$pct%"
+            }
+            State.Cancelling -> {
+                holder.progressGroup.visibility = View.VISIBLE
+                holder.btnAction.visibility = View.GONE
+                holder.btnCancel.visibility = View.VISIBLE
+                holder.btnCancel.isEnabled = false
+                holder.btnCancel.text =
+                    holder.itemView.context.getString(R.string.btn_cancelling)
+                holder.btnUninstall.visibility = View.GONE
+                // 水平进度条没有不定态动画，保留上一次进度即可
+                holder.percent.text = holder.itemView.context.getString(R.string.state_cancelling)
             }
             State.Installed -> {
                 holder.progressGroup.visibility = View.GONE
@@ -86,14 +112,48 @@ class VersionAdapter(
                 holder.btnAction.isEnabled = true
                 holder.btnAction.text =
                     holder.itemView.context.getString(R.string.btn_start)
+                holder.btnCancel.visibility = View.GONE
                 holder.btnUninstall.visibility = View.VISIBLE
+                holder.meta.text = buildString {
+                    append(humanSize(v.size))
+                    if (v.size > 0) append(" · ")
+                    append(v.format)
+                    append(" · ")
+                    append(holder.itemView.context.getString(R.string.versions_installed_here))
+                }
+            }
+            is State.InstalledElsewhere -> {
+                holder.progressGroup.visibility = View.GONE
+                holder.btnAction.visibility = View.VISIBLE
+                holder.btnAction.isEnabled = true
+                // 当前位置没有 rootfs，只能重新下载；「启动」会立刻报「尚未安装」
+                holder.btnAction.text =
+                    holder.itemView.context.getString(R.string.btn_download_again)
+                holder.btnCancel.visibility = View.GONE
+                holder.btnUninstall.visibility = View.GONE
+                holder.meta.text = buildString {
+                    append(humanSize(v.size))
+                    if (v.size > 0) append(" · ")
+                    append(v.format)
+                    append(" · ")
+                    append(
+                        holder.itemView.context.getString(
+                            R.string.versions_installed_elsewhere_fmt,
+                            state.locationLabel
+                        )
+                    )
+                }
             }
         }
 
         holder.btnAction.setOnClickListener {
+            // 只有「已装在本位置」才是启动，其余（Idle / 装在别处）都走下载
             if ((states[v.id] ?: State.Idle) is State.Installed) onStart(v) else onDownload(v)
         }
         holder.btnUninstall.setOnClickListener { onUninstall(v) }
+        holder.btnCancel.setOnClickListener {
+            if ((states[v.id] ?: State.Idle) is State.Downloading) onCancelInstall(v)
+        }
     }
 
     override fun onBindViewHolder(holder: VH, position: Int, payloads: MutableList<Any>) {
@@ -119,6 +179,7 @@ class VersionAdapter(
         val progressBar: ProgressBar = view.findViewById(R.id.progress_bar)
         val percent: TextView = view.findViewById(R.id.tv_percent)
         val btnAction: MaterialButton = view.findViewById(R.id.btn_action)
+        val btnCancel: MaterialButton = view.findViewById(R.id.btn_cancel_install)
         val btnUninstall: MaterialButton = view.findViewById(R.id.btn_uninstall)
     }
 

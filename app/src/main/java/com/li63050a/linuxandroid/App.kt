@@ -14,6 +14,8 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         AppLogger.init(filesDir)
+        // SessionManager 是纯单例、没有 Context，通知文案需要它注入一次
+        SessionManager.init(this)
         installUncaughtHandler()
         AppLogger.i(TAG, "App started, sdk=${Build.VERSION.SDK_INT}")
     }

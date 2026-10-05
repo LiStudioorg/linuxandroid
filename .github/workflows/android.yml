@@ -1,16 +1,34 @@
 name: Build Android APK
 
+# 触发策略
+#  1. push 到 beta / main 分支 → 编译 + 上传 Artifact（不发行）
+#     注意：main 只做构建校验，正式发行走 beta 或 tag
+#  2. push 任意 tag（如 v0.0.2）→ 编译 + 创建 GitHub Release
+#  3. 手动触发 → 可选择是否发布 Release
 on:
   push:
+    branches:
+      - beta
     tags:
-      - '*' # 打任何 tag 都会触发
-  workflow_dispatch: # 支持手动触发（只编译，不发 Release）
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release:
+        description: '是否创建 Release（手动触发时有效）'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
+# contents: write 是创建 Release 所必需
 permissions:
-  contents: write # 必须要有写权限，否则无法创建 Release
+  contents: write
 
 jobs:
   build:
+    name: Build & (maybe) Release
     runs-on: ubuntu-latest
 
     steps:
@@ -22,41 +40,108 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      # 替换掉了容易报错的 Setup Android SDK，直接接受预装SDK的许可证
-      - name: Accept Android SDK Licenses
-        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-
-      # 1. 从 Secrets 解密出 keystore
-      - name: Decode Keystore
-        run: |
-          mkdir -p ${{ runner.temp }}/keys
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ${{ runner.temp }}/keys/release.jks
+          cache: 'gradle'
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # 2. 编译时传入环境变量
-      - name: Build with Gradle (Release)
-        run: ./gradlew assembleRelease
+      # 与本地一致的构建校验：先跑静态约束，避免把明显违规的代码打成包
+      - name: Static constraint check (AGENTS.md §8)
+        run: |
+          set -e
+          fail=0
+          check_empty() {
+            if grep -rqE "$2" "$1" 2>/dev/null; then
+              echo "::error::$3 检查失败：$2 不应出现在 $1"
+              fail=1
+            else
+              echo "OK: $3"
+            fi
+          }
+          check_empty "app/src/main/java/" 'java\.nio|toPath\(\)' '§8.6 禁用 java.nio.file'
+          check_empty "app/src/main/" 'READ_EXTERNAL_STORAGE|WRITE_EXTERNAL_STORAGE|MANAGE_EXTERNAL_STORAGE' '§8.2 不得申请存储权限'
+          check_empty "app/src/main/java/" 'ACTION_OPEN_DOCUMENT_TREE' '§8.2 禁用 SAF'
+          check_empty "app/src/main/java/" 'com\.example' '§8.5 包名不得残留 com.example'
+          check_empty "app/src/main/res/layout/view_terminal.xml" 'textPassword|textWebPassword' '§8.15 安全键盘规避'
+          exit $fail
+
+      # 二进制必须入库才能打包（§8.9）
+      - name: Verify PRoot binaries are present
+        run: |
+          test -f app/src/main/jniLibs/arm64-v8a/libproot.so
+          test -f app/src/main/jniLibs/arm64-v8a/libproot-loader.so
+          test -f app/src/main/assets/native/arm64-v8a/libtalloc.so.2
+          test -f app/src/main/assets/native/arm64-v8a/libandroid-shmem.so
+          echo "All required .so files present"
+
+      - name: Accept Android SDK Licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+      # 从 Secrets 解密 keystore。缺失时回退为 debug 构建，保证 CI 不会因为
+      # 没有配好签名而整个红掉（也方便 fork 仓库直接跑通）。
+      - name: Decode Keystore
+        id: keystore
+        run: |
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            mkdir -p "${{ runner.temp }}/keys"
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "${{ runner.temp }}/keys/release.jks"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+            echo "已配置签名，将构建 release 包"
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::未配置 KEYSTORE_BASE64，回退构建 debug 包（不可用于正式发行）"
+          fi
+
+      - name: Build Release APK
+        if: steps.keystore.outputs.signed == 'true'
+        run: ./gradlew assembleRelease --stacktrace
         env:
           KEYSTORE_PATH: ${{ runner.temp }}/keys/release.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      # 3. 上传 APK 作为临时产物
+      - name: Build Debug APK (unsigned fallback)
+        if: steps.keystore.outputs.signed != 'true'
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Collect APK
+        id: apk
+        run: |
+          mkdir -p out
+          if [ "${{ steps.keystore.outputs.signed }}" = "true" ]; then
+            cp app/build/outputs/apk/release/*.apk out/ 2>/dev/null || true
+          fi
+          if [ -z "$(ls -A out 2>/dev/null)" ]; then
+            cp app/build/outputs/apk/debug/*.apk out/
+          fi
+          ls -lh out/
+          name=$(basename "$(ls out/*.apk | head -1)" .apk)
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
-          path: app/build/outputs/apk/release/*.apk
+          name: ${{ steps.apk.outputs.name }}-${{ github.sha }}
+          path: out/*.apk
+          retention-days: 30
 
-      # 4. 仅在 tag 触发时发布 Release
+      # 发行条件：tag 推送，或手动触发时勾选了 release
       - name: Create GitHub Release
-        if: github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v1
+        if: github.ref_type == 'tag' || inputs.release == 'true'
+        uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/apk/release/*.apk
+          files: out/*.apk
+          name: ${{ github.ref_type == 'tag' && github.ref_name || format('beta-{0}', github.run_number) }}
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('beta-{0}', github.run_number) }}
+          prerelease: ${{ github.ref_type != 'tag' }}
+          generate_release_notes: true
+          body: |
+            自动构建产物。
+
+            - 分支：`${{ github.ref_name }}`
+            - 提交：`${{ github.sha }}`
+            - 构建号：`${{ github.run_number }}`
+            ${{ steps.keystore.outputs.signed != 'true' && '> ⚠️ 本次为 **debug 包**（未配置签名 Secrets），请勿用于正式分发。' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

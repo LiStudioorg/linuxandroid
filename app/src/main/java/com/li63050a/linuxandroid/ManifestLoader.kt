@@ -11,6 +11,15 @@ object ManifestLoader {
 
     const val ASSET_NAME = "rootfs_manifest.json"
 
+    /** 当前支持的清单结构版本（顶层 version 字段） */
+    const val SUPPORTED_VERSION = 2
+
+    /** 解压器支持的格式，直接复用 RootfsExtractor 常量，避免两处漂移 */
+    private val SUPPORTED_FORMATS = setOf(
+        RootfsExtractor.FORMAT_TAR_GZ,
+        RootfsExtractor.FORMAT_TAR_XZ
+    )
+
     fun load(context: Context): List<DistroFamily> {
         val text = context.assets.open(ASSET_NAME)
             .bufferedReader(Charsets.UTF_8)
@@ -20,6 +29,15 @@ object ManifestLoader {
 
     fun parse(json: String): List<DistroFamily> {
         val root = JSONObject(json)
+
+        // 校验顶层结构版本：不认识的结构必须早失败，而不是悄悄解析出半份清单
+        val version = root.optInt("version", -1)
+        if (version != SUPPORTED_VERSION) {
+            throw IllegalArgumentException(
+                "不支持的清单 version=$version（期望 $SUPPORTED_VERSION），请更新应用或清单"
+            )
+        }
+
         val array = root.getJSONArray("distros")
         val result = ArrayList<DistroFamily>(array.length())
         for (i in 0 until array.length()) {
@@ -36,6 +54,13 @@ object ManifestLoader {
                         mirrors.add(mirrorsArr.getString(k))
                     }
                 }
+                val format = vo.getString("format")
+                if (format !in SUPPORTED_FORMATS) {
+                    throw IllegalArgumentException(
+                        "版本 ${vo.getString("id")} 的 format=\"$format\" 不受支持" +
+                            "（支持 ${SUPPORTED_FORMATS.joinToString("/")}）"
+                    )
+                }
                 versions.add(
                     DistroInfo(
                         id = vo.getString("id"),
@@ -45,7 +70,7 @@ object ManifestLoader {
                         url = vo.getString("url"),
                         mirrors = mirrors,
                         sha256 = vo.optString("sha256", ""),
-                        format = vo.getString("format"),
+                        format = format,
                         defaultShell = vo.getString("defaultShell")
                     )
                 )
@@ -59,6 +84,9 @@ object ManifestLoader {
                     versions = versions
                 )
             )
+        }
+        if (result.isEmpty()) {
+            throw IllegalArgumentException("清单未包含任何发行版")
         }
         return result
     }
