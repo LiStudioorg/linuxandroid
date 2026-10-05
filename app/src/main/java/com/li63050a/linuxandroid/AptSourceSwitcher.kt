@@ -447,20 +447,24 @@ object AptSourceSwitcher {
     }
 
     /** 原子写：先写临时文件，再 rename 覆盖目标 */
-    private fun writeAtomic(target: File, content: String): Boolean = try {
-        target.parentFile?.mkdirs()
-        val tmp = File(target.parentFile, "${target.name}.tmp")
-        tmp.writeText(content)
-        if (target.exists() && !target.delete()) {
-            tmp.delete()
-            return false
+    private fun writeAtomic(target: File, content: String): Boolean {
+        return try {
+            target.parentFile?.mkdirs()
+            val tmp = File(target.parentFile, "${target.name}.tmp")
+            tmp.writeText(content)
+            // 先删旧文件再 rename：renameTo 在目标已存在时行为依赖文件系统
+            if (target.exists() && !target.delete()) {
+                tmp.delete()
+                false
+            } else {
+                val ok = tmp.renameTo(target)
+                if (!ok) tmp.delete()
+                ok
+            }
+        } catch (e: IOException) {
+            AppLogger.e("AptSwitch", "写入 ${target.name} 失败", e)
+            false
         }
-        val ok = tmp.renameTo(target)
-        if (!ok) tmp.delete()
-        ok
-    } catch (e: IOException) {
-        AppLogger.e("AptSwitch", "写入 ${target.name} 失败", e)
-        false
     }
 
     /** 拷贝内容（同样走临时文件 + rename），用于备份与恢复 */

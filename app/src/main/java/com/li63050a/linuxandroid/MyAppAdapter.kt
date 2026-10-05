@@ -41,7 +41,9 @@ class MyAppAdapter(
      */
     fun setRunningIds(ids: Set<String>) {
         if (runningIds == ids) return
-        val changed = runningIds.symmetricDifference(ids)
+        // Kotlin 的 Set.symmetricDifference 是 1.9+ 的实验性 API，此处按语义手写：
+        // 旧有新无（变为未运行）∪ 新有旧无（变为运行中），即状态真正变化的那些项。
+        val changed = (runningIds - ids) + (ids - runningIds)
         runningIds = ids
         for (target in changed) {
             val index = items.indexOfFirst { it.id == target }
