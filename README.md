@@ -41,6 +41,10 @@
 | 验证改动 | [docs/TESTING.md](docs/TESTING.md)（手工测试矩阵、回归清单） |
 | 排查故障 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)（按症状索引） |
 | 了解编码约束 | [AGENTS.md](AGENTS.md)（21 条硬性约束） |
+| 名词看不懂 | [docs/GLOSSARY.md](docs/GLOSSARY.md)（术语表） |
+| 想知道改了什么 | [CHANGELOG.md](CHANGELOG.md) |
+| 我要发版 | [docs/RELEASE.md](docs/RELEASE.md) |
+| CI 挂了 | [docs/CI.md](docs/CI.md) |
 
 > ⚠️ 遇到「点启动没反应」，请**先确认设备是 arm64**（本项目仅支持 arm64-v8a，x86 模拟器上 PRoot 无法执行）。详见 [故障排查 §2.1](docs/TROUBLESHOOTING.md)。
 

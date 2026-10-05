@@ -71,10 +71,13 @@ LinuxAndroid（界面品牌名 **ProotTerm**）是一个免 root 的 Android 应
 ## 3. 目录结构
 
 ```
-AGENTS.md / README.md
+AGENTS.md / README.md / CHANGELOG.md
 docs/                             # 项目文档（已纳入版本控制）
   README.md                       # 文档索引与角色导航
+  GLOSSARY.md                     # 术语表：PRoot/rootfs/ulimit/deb822/FUSE 等名词解释
   CONTRIBUTING.md                 # 开发者入门：环境、代码地图、工作流、自检
+  CI.md                           # 持续集成：触发条件、12 步骤、Secrets、失败排查
+  RELEASE.md                      # 发版手册：提版本、打 tag、检查 Release、回滚
   ARCHITECTURE.md                 # 深度架构：分层、核心链路、会话三层架构、存储位置、自启动、风险
   MODULES.md                      # 逐类 API 契约与坑
   TESTING.md                      # 测试策略、手工测试矩阵（本轮新增功能全覆盖）、回归清单
@@ -484,8 +487,12 @@ comm -23 <(grep -rhoP '<string name="\w+"' res/values/strings.xml | sed 's/<stri
 | 文档 | 回答什么 | 读者 |
 | --- | --- | --- |
 | `README.md` | 这是什么、怎么装、怎么用 | 用户 |
+| `CHANGELOG.md` | 每个版本改了什么、有没有破坏性变更 | 用户 / 维护者 |
 | `AGENTS.md`（本文） | 必须遵守什么规则 | AI / 开发者 |
+| `docs/GLOSSARY.md` | 这个名词是什么意思 | 新人 |
 | `docs/CONTRIBUTING.md` | 我怎么开始干活 | 新贡献者 |
+| `docs/CI.md` | CI 怎么触发、挂了怎么修 | 开发者 |
+| `docs/RELEASE.md` | 怎么发一个版本 | 维护者 |
 | `docs/ARCHITECTURE.md` | 系统怎么运作、为什么这么设计 | 开发者 |
 | `docs/MODULES.md` | 这个类怎么用、有什么坑 | 改代码的人 |
 | `docs/TESTING.md` | 怎么验证改动是对的 | 开发者 |
@@ -499,6 +506,8 @@ comm -23 <(grep -rhoP '<string name="\w+"' res/values/strings.xml | sed 's/<stri
 3. **约束以本文 §8 为准**。若代码与约束不符，要么改代码，要么显式修改约束并在 `docs/COMPLIANCE.md` 留档说明理由（参考 §8.3 `extractNativeLibs`、§8.11 远程协议两例的处置方式）。
 4. **新增风险/待办**：设计层面的写进 `docs/ARCHITECTURE.md` §19；合规层面的写进 `docs/COMPLIANCE.md` §5。
 5. **修改代码后同步更新受影响的文档**，尤其是类清单、行数、常量表、`docs/MODULES.md` 的 API 契约。
+6. **发版前必须**：提升 `versionCode` / `versionName`、把 `CHANGELOG.md` 的
+   `[未发布]` 段改为本次版本号 + 日期。完整步骤见 `docs/RELEASE.md`。
 
 > ✅ **`docs/` 已纳入版本控制**（自「多实例隔离 + 资源限制 + 镜像增强 + APT 换源」提交起）。
 > 新增或修改文档后请一并 `git add`，避免文档只存在于本地工作区。

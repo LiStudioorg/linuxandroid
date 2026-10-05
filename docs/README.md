@@ -1,6 +1,8 @@
 # 项目文档索引
 
-> LinuxAndroid（ProotTerm）的文档导航。**第一次来请先读 [CONTRIBUTING.md](CONTRIBUTING.md)。**
+> LinuxAndroid（ProotTerm）的文档导航。
+> **第一次来请先读 [GLOSSARY.md](GLOSSARY.md)（名词解释）再读
+> [CONTRIBUTING.md](CONTRIBUTING.md)（怎么干活）。**
 
 ---
 
@@ -8,12 +10,16 @@
 
 | 我是…… | 建议阅读顺序 |
 | --- | --- |
+| **完全的新人** | [GLOSSARY.md](GLOSSARY.md) → [../README.md](../README.md) → [CONTRIBUTING.md](CONTRIBUTING.md) |
 | **新贡献者** | [CONTRIBUTING.md](CONTRIBUTING.md) → [AGENTS.md](../AGENTS.md) §8 → [ARCHITECTURE.md](ARCHITECTURE.md) |
 | **要改会话 / 后台 / 自启动** | [ARCHITECTURE.md](ARCHITECTURE.md) §13–15 → [MODULES.md](MODULES.md) §10–12 → [TESTING.md](TESTING.md) §7.4/7.5 |
 | **要改某个模块** | [MODULES.md](MODULES.md) → 对应类的章节 → [TESTING.md](TESTING.md) |
 | **要加发行版/版本** | [ARCHITECTURE.md](ARCHITECTURE.md) §12 扩展指南 → `assets/rootfs_manifest.json` |
 | **遇到问题** | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
 | **要验证改动** | [TESTING.md](TESTING.md) |
+| **要发版** | [RELEASE.md](RELEASE.md) → [CHANGELOG.md](../CHANGELOG.md) |
+| **CI 挂了 / 要改工作流** | [CI.md](CI.md) |
+| **想了解改了什么** | [CHANGELOG.md](../CHANGELOG.md) |
 | **普通用户** | [../README.md](../README.md) |
 | **做合规审查** | [COMPLIANCE.md](COMPLIANCE.md) → [AGENTS.md](../AGENTS.md) §8 |
 
@@ -26,15 +32,20 @@
 | 文档 | 行数 | 定位 | 读者 |
 | --- | ---: | --- | --- |
 | [README.md](../README.md) | 249 | 项目介绍、构建、使用方法、FAQ、工作原理简述 | 用户 |
-| [AGENTS.md](../AGENTS.md) | 475 | **编码约定与 21 条硬性约束**（权威，改代码前必读） | AI / 开发者 |
+| [CHANGELOG.md](../CHANGELOG.md) | 181 | 版本变更日志、版本号约定、已知限制 | 用户 / 维护者 |
+| [AGENTS.md](../AGENTS.md) | 505 | **编码约定与 21 条硬性约束**（权威，改代码前必读） | AI / 开发者 |
 
-> ⚠️ **AGENTS.md §8 是硬性约束**，不是建议。违反会导致行为错误或安全问题。16 条摘要见下。
+> ⚠️ **AGENTS.md §8 是硬性约束**，不是建议。违反会导致行为错误或安全问题。
+> 21 条摘要见本文件末尾。
 
 ### docs/
 
 | 文档 | 行数 | 定位 |
 | --- | ---: | --- |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | 352 | 开发者入门：环境准备、代码地图、工作流、提交前自检 |
+| [GLOSSARY.md](GLOSSARY.md) | 212 | **术语表**：PRoot / rootfs / ulimit / deb822 / FUSE / ABI 等名词解释（新人先看这个） |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 351 | 开发者入门：环境准备、代码地图、工作流、提交前自检 |
+| [CI.md](CI.md) | 241 | 持续集成详解：触发条件、12 个步骤、Secrets、失败排查、本地复现 |
+| [RELEASE.md](RELEASE.md) | 217 | **发版手册**：提升版本号、打 tag、检查 Release、回滚 |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 1064 | 深度架构：分层、九条核心链路、状态机、**多实例会话架构**、**资源限制**、**镜像优选与分块下载**、**APT 换源**、存储位置、自启动、设计决策、扩展指南、风险清单 |
 | [MODULES.md](MODULES.md) | 1088 | 逐类 API 契约与坑（26 个 Kotlin 文件，6186 行） |
 | [TESTING.md](TESTING.md) | 1209 | 测试策略、静态检查、手工测试矩阵（多实例 MI / 资源限制 RL / 镜像 MX / 分块 MP / 换源 AS / 实例配置 IC）、回归清单 |
