@@ -115,6 +115,14 @@ jobs:
           if [ -z "$(ls -A out 2>/dev/null)" ]; then
             cp app/build/outputs/apk/debug/*.apk out/
           fi
+          # 重命名为可自识别、可多次下载不冲突的文件名
+          ver=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts | head -1)
+          short=$(echo "${{ github.sha }}" | cut -c1-7)
+          for f in out/*.apk; do
+            [ -e "$f" ] || continue
+            case "$f" in *debug*) kind=debug;; *) kind=release;; esac
+            mv "$f" "out/ProotTerm-v${ver}-${kind}-${short}.apk"
+          done
           ls -lh out/
           name=$(basename "$(ls out/*.apk | head -1)" .apk)
           echo "name=$name" >> "$GITHUB_OUTPUT"
