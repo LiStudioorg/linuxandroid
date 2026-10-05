@@ -306,16 +306,15 @@ refactor: 拆分 MainActivity 安装编排逻辑
 
 **原则**：同一事实只在一处详述，其他地方链接过去。改接口时优先更新 MODULES.md，改设计时更新 ARCHITECTURE.md。
 
-### ⚠️ `docs/` 目录尚未纳入版本控制
+### ✅ `docs/` 已纳入版本控制
 
-当前 `docs/` 是 **untracked**（未被 `.gitignore` 忽略，只是从未 `git add`）。这意味着这些文档只存在于本地工作区，`git clone` 的人拿不到。
+`docs/` 已随「多实例隔离 + 资源限制 + 镜像增强 + APT 换源」提交入库，`git clone` 即可拿到全部文档。
+
+改代码时请把文档改动**放进同一个提交**（§9.5），不要单独留在工作区：
 
 ```bash
-# 建议纳入版本控制
-git add docs/ && git commit -m "docs: 补充架构/模块/开发者文档"
+git add app/ docs/ AGENTS.md && git commit -m "..."
 ```
-
-若团队决定不纳入，请在 `.gitignore` 显式写明，避免每个新人都困惑于「文档为什么在本地」。
 
 ---
 

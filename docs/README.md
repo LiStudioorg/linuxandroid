@@ -113,4 +113,4 @@ I 换源      AptSourceSwitcher：deb822 / legacy / Alpine，备份可逆、写�
 3. **约束以 [AGENTS.md](../AGENTS.md) 为准**；若代码与约束不符，要么改代码，要么明确改约束（并在 [COMPLIANCE.md](COMPLIANCE.md) 留档）。
 4. **新增风险/待办**写进 [ARCHITECTURE.md](ARCHITECTURE.md) §19 或 [COMPLIANCE.md](COMPLIANCE.md) §5。
 
-> ⚠️ **`docs/` 目录尚未纳入版本控制**（untracked，未被 `.gitignore` 忽略）。这意味着 clone 仓库拿不到这些文档。建议 `git add docs/`，或明确写入 `.gitignore`。详见 [CONTRIBUTING.md §6](CONTRIBUTING.md)。
+> ✅ **`docs/` 已纳入版本控制**。修改文档后请与代码一同提交，不要只留在本地工作区。

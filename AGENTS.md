@@ -72,7 +72,7 @@ LinuxAndroid（界面品牌名 **ProotTerm**）是一个免 root 的 Android 应
 
 ```
 AGENTS.md / README.md
-docs/                             # 项目文档（当前 untracked，见第 9 节）
+docs/                             # 项目文档（已纳入版本控制）
   README.md                       # 文档索引与角色导航
   CONTRIBUTING.md                 # 开发者入门：环境、代码地图、工作流、自检
   ARCHITECTURE.md                 # 深度架构：分层、核心链路、会话三层架构、存储位置、自启动、风险
@@ -86,7 +86,7 @@ gradle.properties
 gradlew / gradlew.bat             # Gradle 8.13 wrapper（入库，CI 直接 ./gradlew）
 gradle/wrapper/{gradle-wrapper.jar, gradle-wrapper.properties}
 .gitignore                        # 不排除 jniLibs *.so（已入库）
-.github/workflows/android.yml     # tag → Release；workflow_dispatch → 仅产物（无 Fetch 步骤）
+.github/workflows/android.yml     # beta push → 构建；tag → Release；可手动触发（无 Fetch 步骤）
 app/
   build.gradle.kts                # 包名/SDK/签名/packaging.jniLibs
   proguard-rules.pro
@@ -102,7 +102,7 @@ app/
       libproot-loader.so          # ← usr/libexec/proot/loader
       README.txt                  # deb 提取步骤（兜底说明）
     res/xml/file_paths.xml        # FileProvider paths（logs）
-    res/layout/                   # 12 个布局
+    res/layout/                   # 13 个布局
       activity_main.xml           # Drawer + NavigationView + 5 个 <include>
       activity_log.xml  nav_header.xml
       view_{myapps,terminal,distros,versions,settings}.xml   # 五个屏
@@ -357,10 +357,38 @@ EOF
 
 ### CI（.github/workflows/android.yml）
 
-1. `push` 任意 **tag** → 构建 + 自动创建 GitHub Release（附 APK）
-2. **workflow_dispatch** → 仅构建 + Artifact 上传，不发 Release
-3. 步骤顺序：Checkout → JDK17 → Accept SDK Licenses → Decode Keystore → chmod gradlew → `./gradlew assembleRelease` → Upload → Release（**无 Fetch PRoot 步骤**，`jniLibs` 两个 .so 已入库直接打包）
-4. 所需 Secrets：`KEYSTORE_BASE64`（jks 的 base64）、`KEYSTORE_PASSWORD`、`KEY_ALIAS`、`KEY_PASSWORD`
+触发与产物：
+
+| 事件 | 构建 | 发行 |
+| --- | --- | --- |
+| push 到 **`beta`** 分支 | ✅ | ❌ 仅上传 Artifact |
+| push 任意 **tag**（`v*`） | ✅ | ✅ 创建正式 Release |
+| **workflow_dispatch** | ✅ | 勾选 `release=true` 时创建**预发行** Release |
+
+> ⚠️ **`beta` 是集成分支，`main` 不参与自动发行**。当前工作流只在 `beta`
+> 上自动构建；若需把自动构建扩展到 `main`，必须显式修改 `on.push.branches`，
+> 不要依赖默认分支行为。
+
+步骤顺序：Checkout → JDK17（含 Gradle 缓存）→ chmod gradlew →
+**§8 静态约束检查** → **校验 4 个 .so 已入库** → Accept SDK Licenses →
+Decode Keystore → `./gradlew assembleRelease` → 收集并重命名 APK →
+Upload Artifact →（按条件）Release。
+
+- **§8 静态约束检查**会在编译前先跑，把 §8.2/§8.5/§8.6/§8.15 的违规拦在
+  打包之前。新增硬约束时**应同步往这一步加检查**，否则约束只停留在文档上。
+- **APK 命名**：`ProotTerm-v<versionName>-<release|debug>-<短SHA>.apk`，
+  便于区分不同构建，避免同名互相覆盖。
+- **无签名回退**：未配置 `KEYSTORE_BASE64` 时自动改跑 `assembleDebug`，
+  CI 不会整条红掉（便于 fork 跑通）；但此时 Release 说明里会带警告，
+  **debug 包不可用于正式分发**。
+- **无 Fetch PRoot 步骤**：`jniLibs/**` 与 `assets/native/**` 的 4 个 .so
+  已入库，直接打包（§8.9）。
+
+所需 Secrets：`KEYSTORE_BASE64`（jks 的 base64）、`KEYSTORE_PASSWORD`、
+`KEY_ALIAS`、`KEY_PASSWORD`。缺省时回退 debug 构建。
+
+**版本号**：`versionCode` / `versionName` 在 `app/build.gradle.kts` 中手工维护，
+打 tag 前必须先提升，否则 Release 里的 APK 版本名与 tag 不一致。
 
 ### 终检清单
 
@@ -472,4 +500,6 @@ comm -23 <(grep -rhoP '<string name="\w+"' res/values/strings.xml | sed 's/<stri
 4. **新增风险/待办**：设计层面的写进 `docs/ARCHITECTURE.md` §19；合规层面的写进 `docs/COMPLIANCE.md` §5。
 5. **修改代码后同步更新受影响的文档**，尤其是类清单、行数、常量表、`docs/MODULES.md` 的 API 契约。
 
-> ⚠️ **`docs/` 目录当前未被 git 跟踪**（untracked，且未被 `.gitignore` 忽略）。这意味着 `git clone` 的人拿不到这些文档。建议执行 `git add docs/` 纳入版本控制；若决定不纳入，请在 `.gitignore` 中显式写明原因。
+> ✅ **`docs/` 已纳入版本控制**（自「多实例隔离 + 资源限制 + 镜像增强 + APT 换源」提交起）。
+> 新增或修改文档后请一并 `git add`，避免文档只存在于本地工作区。
+> 文档与代码必须在同一个提交里更新（§9.5）。
